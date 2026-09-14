@@ -507,7 +507,7 @@ export function CategoryPortalPage({
                           <ProductCard
                             product={prod}
                             onAddToCart={() => addToCart(1)}
-                            onOpenDetails={(p) => setSelectedProductModal(p)}
+                             
                           />
                         </div>
                       ))}
