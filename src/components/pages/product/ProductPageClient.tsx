@@ -37,6 +37,13 @@ export function ProductPageClient({
   const [quantity, setQuantity] = useState<number>(1);
   const [added, setAdded] = useState(false);
   const [wishlist, setWishlist] = useState(false);
+  const [similarPage, setSimilarPage] = useState(1);
+  const SIMILAR_PER_PAGE = 4;
+  const totalSimilarPages = Math.ceil(similarProducts.length / SIMILAR_PER_PAGE);
+  const paginatedSimilar = similarProducts.slice(
+    (similarPage - 1) * SIMILAR_PER_PAGE,
+    similarPage * SIMILAR_PER_PAGE
+  );
 
   const origPrice = product.originalPrice || Math.round(product.price * 1.18 * 100) / 100;
   const discountVal = Math.round(((origPrice - product.price) / origPrice) * 100 * 100) / 100;
@@ -325,20 +332,73 @@ export function ProductPageClient({
 
           {/* Similar Products Section */}
           {similarProducts.length > 0 && (
-            <div className="pt-8 space-y-6">
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                Similar Products
-              </h3>
+            <div className="pt-8 space-y-6 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
+                    Similar Products
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Explore items from the same category
+                  </p>
+                </div>
+                {totalSimilarPages > 1 && (
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                    Page {similarPage} of {totalSimilarPages} ({similarProducts.length} items)
+                  </span>
+                )}
+              </div>
               
-              <div className="flex items-center gap-5 overflow-x-auto no-scrollbar pb-4 pt-1">
-                {similarProducts.map((simProd) => (
+              {/* 2 Products Per Line Grid (Mobile: 2 cols, Desktop: 4 cols) */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                {paginatedSimilar.map((simProd) => (
                   <ProductCard
                     key={simProd.slug}
                     product={simProd}
-                    onOpenDetails={(p) => router.push(`/product/${p.slug}`)}
                   />
                 ))}
               </div>
+
+              {/* Clean Pagination Bar */}
+              {totalSimilarPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Showing {(similarPage - 1) * SIMILAR_PER_PAGE + 1}–{Math.min(similarPage * SIMILAR_PER_PAGE, similarProducts.length)} of {similarProducts.length} products
+                  </span>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setSimilarPage((p) => Math.max(1, p - 1))}
+                      disabled={similarPage === 1}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                    >
+                      ← Prev
+                    </button>
+
+                    {Array.from({ length: totalSimilarPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setSimilarPage(pageNum)}
+                        className={`h-8 w-8 rounded-xl text-xs font-extrabold transition ${
+                          similarPage === pageNum
+                            ? "bg-amber-400 text-slate-950 shadow-md scale-105"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setSimilarPage((p) => Math.min(totalSimilarPages, p + 1))}
+                      disabled={similarPage === totalSimilarPages}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

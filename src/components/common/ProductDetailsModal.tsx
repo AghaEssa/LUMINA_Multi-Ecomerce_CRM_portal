@@ -29,6 +29,8 @@ export function ProductDetailsModal({
   const [added, setAdded] = useState(false);
   const [wishlist, setWishlist] = useState(false);
   const [activeProduct, setActiveProduct] = useState<ProductItem | null>(null);
+  const [similarPage, setSimilarPage] = useState(1);
+  const SIMILAR_PER_PAGE = 4;
 
   // Synchronize when product changes
   useEffect(() => {
@@ -62,7 +64,12 @@ export function ProductDetailsModal({
   // Similar Products from same category
   const similarProducts = DEFAULT_PRODUCTS.filter(
     (p) => p.categorySlug === activeProduct.categorySlug && p.slug !== activeProduct.slug
-  ).slice(0, 6);
+  );
+  const totalSimilarPages = Math.ceil(similarProducts.length / SIMILAR_PER_PAGE);
+  const paginatedSimilar = similarProducts.slice(
+    (similarPage - 1) * SIMILAR_PER_PAGE,
+    similarPage * SIMILAR_PER_PAGE
+  );
 
   const { addToCart } = useCartContext();
   const { requireAuth } = useAuth();
@@ -351,17 +358,66 @@ export function ProductDetailsModal({
         {/* Similar Products Section */}
         {similarProducts.length > 0 && (
           <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 space-y-4">
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-              Similar Products
-            </h3>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                Similar Products
+              </h3>
+              {totalSimilarPages > 1 && (
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                  Page {similarPage} of {totalSimilarPages}
+                </span>
+              )}
+            </div>
             
-            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-3 pt-1">
-              {similarProducts.map((simProd) => (
+            {/* 2 Products Per Line Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {paginatedSimilar.map((simProd) => (
                 <div key={simProd.slug} onClick={() => handleSelectProduct(simProd)}>
                   <ProductCard product={simProd} />
                 </div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalSimilarPages > 1 && (
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Showing {(similarPage - 1) * SIMILAR_PER_PAGE + 1}–{Math.min(similarPage * SIMILAR_PER_PAGE, similarProducts.length)} of {similarProducts.length}
+                </span>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setSimilarPage((p) => Math.max(1, p - 1))}
+                    disabled={similarPage === 1}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40"
+                  >
+                    ← Prev
+                  </button>
+
+                  {Array.from({ length: totalSimilarPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setSimilarPage(pageNum)}
+                      className={`h-7 w-7 rounded-lg text-[11px] font-extrabold transition ${
+                        similarPage === pageNum
+                          ? "bg-amber-400 text-slate-950 shadow-sm"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setSimilarPage((p) => Math.min(totalSimilarPages, p + 1))}
+                    disabled={similarPage === totalSimilarPages}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

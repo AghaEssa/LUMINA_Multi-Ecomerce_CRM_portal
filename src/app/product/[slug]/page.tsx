@@ -31,7 +31,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return null;
   }
 
-  const similarProducts = await fetchSimilarProducts(product.categorySlug, product.slug, 6);
+  const similarProducts = await fetchSimilarProducts(product.categorySlug, product.slug, 12);
   const category = categories.find((c) => c.slug === product.categorySlug);
 
   return (

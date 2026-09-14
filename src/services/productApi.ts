@@ -132,7 +132,7 @@ export async function fetchProductBySlug(slug: string): Promise<ProductItem | un
 export async function fetchSimilarProducts(
   categorySlug: string,
   currentProductSlug: string,
-  limit = 6
+  limit = 12
 ): Promise<ProductItem[]> {
   return DEFAULT_PRODUCTS.filter(
     (p) => p.categorySlug === categorySlug && p.slug !== currentProductSlug

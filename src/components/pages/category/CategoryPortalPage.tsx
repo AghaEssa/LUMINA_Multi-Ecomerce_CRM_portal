@@ -520,7 +520,6 @@ export function CategoryPortalPage({
                         key={prod.slug}
                         product={prod}
                         onAddToCart={() => addToCart(1)}
-                        onOpenDetails={(p) => setSelectedProductModal(p)}
                       />
                     ))}
                   </div>
