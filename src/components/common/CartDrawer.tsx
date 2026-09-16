@@ -196,7 +196,7 @@ export function CartDrawer() {
               <button
                 className="w-full rounded-2xl bg-[#ffb800] hover:bg-[#f5b000] active:scale-[0.99] py-3.5 px-4 text-center font-extrabold text-slate-950 text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Sign in to checkout</span>
+                <span>Login to checkout</span>
               </button>
             </div>
           )}

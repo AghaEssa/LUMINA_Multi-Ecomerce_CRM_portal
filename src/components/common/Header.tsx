@@ -9,6 +9,7 @@ import type { CategoryItem } from "@/lib/categories";
 import { useCartContext } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { LuminaLogo } from "@/components/common/LuminaLogo";
 
 type HeaderProps = {
   cartCount?: number;
@@ -218,18 +219,8 @@ export function Header({
 
         {/* Brand Logo - Clicking takes back to Main Multi-Category Store Homepage */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="group flex items-center gap-2 sm:gap-2.5" title="Go to Lumina Main Storefront">
-            <div className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-xl bg-white/15 text-white shadow-inner transition duration-300 group-hover:scale-105 group-hover:bg-white group-hover:text-ocean-700 shrink-0">
-              <span className="font-extrabold text-base sm:text-lg tracking-tighter">L</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg sm:text-2xl font-black tracking-[0.15em] sm:tracking-[0.2em] text-white transition group-hover:text-ocean-100 flex items-center gap-2">
-                LUMINA
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-ocean-200 hidden sm:block">
-                Multi-Category Store
-              </span>
-            </div>
+          <Link href="/" className="group flex items-center transition hover:opacity-90" title="Go to Lumina Main Storefront">
+            <LuminaLogo layout="horizontal" size="md" textColor="text-white" />
           </Link>
         </div>
 
