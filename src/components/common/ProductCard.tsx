@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/common/Icons";
 import type { ProductItem } from "@/lib/products";
 import { useCartContext } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -24,10 +25,12 @@ export function ProductCard({
 }: ProductCardProps) {
   const router = useRouter();
   const { addToCart } = useCartContext();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const { requireAuth } = useAuth();
   const { t } = useLanguage();
   const [added, setAdded] = useState(false);
-  const [wishlist, setWishlist] = useState(false);
+
+  const wishlist = isInWishlist(product.slug);
 
   const handleAdd = useCallback(
     (e: React.MouseEvent) => {
@@ -90,7 +93,7 @@ export function ProductCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setWishlist((prev) => !prev);
+                toggleWishlist(product);
               }}
               className={`grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border shadow-md transition-all duration-200 ${
                 wishlist

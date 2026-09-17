@@ -11,8 +11,17 @@ export type CartItem = {
   price: number;
   image: string;
   vendor: string;
+  categorySlug?: string;
+  categoryName?: string;
   size: string;
   quantity: number;
+};
+
+export type ToastItem = {
+  id: string;
+  itemTitle: string;
+  itemImage: string;
+  timestamp: number;
 };
 
 export type ToastState = {
@@ -34,7 +43,8 @@ type CartContextType = {
   cartCount: number;
   subtotal: number;
   toast: ToastState;
-  hideToast: () => void;
+  toasts: ToastItem[];
+  hideToast: (id?: string) => void;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
@@ -51,13 +61,20 @@ const INITIAL_CART_ITEMS: CartItem[] = [];
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [toast, setToast] = useState<ToastState>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const { user, openAuthModal } = useAuth();
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
-  const hideToast = useCallback(() => setToast(null), []);
+
+  const hideToast = useCallback((id?: string) => {
+    if (id) {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    } else {
+      setToasts([]);
+    }
+  }, []);
 
   const performAddToCart = useCallback(
     ({ product, quantity = 1, size = "M", openDrawer = false }: AddToCartOptions) => {
@@ -83,6 +100,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               price: product.price,
               image: product.image,
               vendor: vendorName,
+              categorySlug: product.categorySlug || "clothes",
+              categoryName: product.categorySlug
+                ? product.categorySlug.charAt(0).toUpperCase() + product.categorySlug.slice(1).replace(/-/g, " ")
+                : "General",
               size: size,
               quantity: quantity,
             },
@@ -90,12 +111,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      // Show top concise toast popup notification
-      setToast({
-        show: true,
-        itemTitle: product.title,
-        itemImage: product.image,
-      });
+      // Append to toast queue (keep max 4 active in queue)
+      const toastId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      setToasts((prev) => [
+        ...prev.slice(-3),
+        {
+          id: toastId,
+          itemTitle: product.title,
+          itemImage: product.image,
+          timestamp: Date.now(),
+        },
+      ]);
 
       if (openDrawer) {
         setIsCartOpen(true);
@@ -144,13 +170,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return Math.round(total * 100) / 100;
   }, [cartItems]);
 
+  const legacyToast = useMemo<ToastState>(() => {
+    if (toasts.length === 0) return null;
+    const latest = toasts[toasts.length - 1];
+    return {
+      show: true,
+      itemTitle: latest.itemTitle,
+      itemImage: latest.itemImage,
+    };
+  }, [toasts]);
+
   const value = useMemo(
     () => ({
       cartItems,
       isCartOpen,
       cartCount,
       subtotal,
-      toast,
+      toast: legacyToast,
+      toasts,
       hideToast,
       openCart,
       closeCart,
@@ -165,7 +202,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isCartOpen,
       cartCount,
       subtotal,
-      toast,
+      legacyToast,
+      toasts,
       hideToast,
       openCart,
       closeCart,

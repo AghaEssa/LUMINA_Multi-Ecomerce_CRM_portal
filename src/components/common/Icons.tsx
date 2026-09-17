@@ -39,6 +39,16 @@ import {
   Users,
   Package,
   Trash2,
+  Tag,
+  Percent,
+  ExternalLink,
+  Maximize2,
+  Grid,
+  List,
+  Plus,
+  Minus,
+  Info,
+  ArrowLeft,
 } from "lucide-react";
 
 export const Icons = {
@@ -80,6 +90,16 @@ export const Icons = {
   Users,
   Package,
   Trash2,
+  Tag,
+  Percent,
+  ExternalLink,
+  Maximize2,
+  Grid,
+  List,
+  Plus,
+  Minus,
+  Info,
+  ArrowLeft,
 };
 
 export type IconName = keyof typeof Icons | string;
@@ -95,3 +115,4 @@ export function Icon({
   const Component = Icons[normalizedName] || LayoutGrid;
   return <Component className={className} />;
 }
+

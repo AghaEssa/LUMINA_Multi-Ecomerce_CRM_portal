@@ -2,11 +2,15 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartDrawer } from "@/components/common/CartDrawer";
+import { WishlistDrawer } from "@/components/common/WishlistDrawer";
 import { CartToast } from "@/components/common/CartToast";
 import { AuthModal } from "@/components/common/AuthModal";
+import { ProfileModal } from "@/components/common/ProfileModal";
+import { Security2FAModal } from "@/components/common/Security2FAModal";
 
 export const metadata: Metadata = {
   title: `${APP_NAME} | Multi-Category Storefront & Enterprise CRM`,
@@ -104,15 +108,22 @@ export default function RootLayout({
         <div id="google_translate_element" />
         <LanguageProvider>
           <AuthProvider>
-            <CartProvider>
-              {children}
-              <CartToast />
-              <CartDrawer />
-              <AuthModal />
-            </CartProvider>
+            <WishlistProvider>
+              <CartProvider>
+                {children}
+                <CartToast />
+                <CartDrawer />
+                <WishlistDrawer />
+                <AuthModal />
+                <ProfileModal />
+                <Security2FAModal />
+              </CartProvider>
+            </WishlistProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>
     </html>
   );
 }
+
+

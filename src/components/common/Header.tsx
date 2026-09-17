@@ -7,9 +7,13 @@ import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import type { CategoryItem } from "@/lib/categories";
 import { useCartContext } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { LuminaLogo } from "@/components/common/LuminaLogo";
+import { ProfileModal } from "@/components/common/ProfileModal";
+import { Security2FAModal } from "@/components/common/Security2FAModal";
+import { WishlistDrawer } from "@/components/common/WishlistDrawer";
 
 type HeaderProps = {
   cartCount?: number;
@@ -27,7 +31,6 @@ const DEFAULT_NAV_LINKS = [
 ];
 
 export function Header({
-  cartCount = 0,
   onOpenSearch,
   category,
   activeNav = "storefront",
@@ -39,10 +42,10 @@ export function Header({
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   const { t } = useLanguage();
-  const { user, logout, openAuthModal } = useAuth();
-
+  const { user, logout, openAuthModal, openProfileModal, openSecurityModal } = useAuth();
   const { cartCount: ctxCount, openCart } = useCartContext();
-  const displayCartCount = cartCount || ctxCount;
+  const { openWishlist, wishlistCount } = useWishlist();
+  const displayCartCount = ctxCount;
 
   // Auto-close profile dropdown when clicking outside, scrolling, or pressing Escape
   useEffect(() => {
@@ -306,25 +309,47 @@ export function Header({
 
             {/* Profile Dropdown for Logged In User */}
             {profileOpen && user && (
-              <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 text-slate-800 dark:text-slate-100 z-50 animate-fade-in">
-                <div className="border-b border-slate-100 pb-3 dark:border-slate-800 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold text-ocean-600 dark:text-ocean-400 uppercase tracking-widest">
-                      {user.role} ACCOUNT
-                    </span>
-                    {user.isTwoFactorEnabled && (
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        🔒 2FA Active
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {user.name || "Lumina User"}
+              <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 text-slate-800 dark:text-slate-100 z-50 animate-fade-in">
+                {/* Header: ONLY Customer Name (no badges, no title label, no email) */}
+                <div className="border-b border-slate-100 pb-2.5 dark:border-slate-800 px-2">
+                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                    {user.name || user.email.split("@")[0]}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                 </div>
 
-                <div className="mt-3 space-y-1">
+                {/* 4 Main Nav Rows: Profile, Wishlist, Shopping Cart, 2FA Security, Sign Out */}
+                <div className="mt-2 space-y-1">
+                  {/* 1. Profile */}
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      openProfileModal();
+                    }}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon name="User" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
+                      <span>Profile</span>
+                    </span>
+                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+
+                  {/* 2. Wishlist */}
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      openWishlist();
+                    }}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm">❤️</span>
+                      <span>Wishlist ({wishlistCount})</span>
+                    </span>
+                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+
+                  {/* 3. Shopping Cart */}
                   <button
                     onClick={() => {
                       setProfileOpen(false);
@@ -339,12 +364,28 @@ export function Header({
                     <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
                   </button>
 
+                  {/* 4. 2FA Security */}
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      openSecurityModal();
+                    }}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon name="Lock" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
+                      <span>2FA Security</span>
+                    </span>
+                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+
+                  {/* 5. Sign Out */}
                   <button
                     onClick={() => {
                       setProfileOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-left"
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-left pt-2 border-t border-slate-100 dark:border-slate-800/80"
                   >
                     <span>Sign Out</span>
                     <Icon name="X" className="h-3.5 w-3.5 text-rose-500" />
@@ -499,3 +540,5 @@ export function Header({
 }
 
 export const SiteHeader = Header;
+
+

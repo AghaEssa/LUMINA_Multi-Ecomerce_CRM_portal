@@ -20,10 +20,16 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthModalOpen: boolean;
   authModalMode: AuthModalMode;
+  isProfileModalOpen: boolean;
+  isSecurityModalOpen: boolean;
   pendingProduct: ProductItem | null;
   pendingAction: (() => void) | null;
   openAuthModal: (mode?: AuthModalMode, product?: ProductItem | null, onSuccess?: () => void) => void;
   closeAuthModal: () => void;
+  openProfileModal: () => void;
+  closeProfileModal: () => void;
+  openSecurityModal: () => void;
+  closeSecurityModal: () => void;
   setAuthModalMode: (mode: AuthModalMode) => void;
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
@@ -36,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<AuthModalMode>("login");
   const [pendingProduct, setPendingProduct] = useState<ProductItem | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -80,15 +88,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingAction(null);
   }, []);
 
+  const openProfileModal = useCallback(() => setIsProfileModalOpen(true), []);
+  const closeProfileModal = useCallback(() => setIsProfileModalOpen(false), []);
+  const openSecurityModal = useCallback(() => setIsSecurityModalOpen(true), []);
+  const closeSecurityModal = useCallback(() => setIsSecurityModalOpen(false), []);
+
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
       setUser(null);
       closeAuthModal();
+      closeProfileModal();
+      closeSecurityModal();
       window.location.reload();
     }
-  }, [closeAuthModal]);
+  }, [closeAuthModal, closeProfileModal, closeSecurityModal]);
 
   /**
    * Protected Action Helper:
@@ -114,10 +129,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthModalOpen,
         authModalMode,
+        isProfileModalOpen,
+        isSecurityModalOpen,
         pendingProduct,
         pendingAction,
         openAuthModal,
         closeAuthModal,
+        openProfileModal,
+        closeProfileModal,
+        openSecurityModal,
+        closeSecurityModal,
         setAuthModalMode,
         checkAuth,
         logout,
@@ -128,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
 
 export function useAuth() {
   const context = useContext(AuthContext);

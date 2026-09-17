@@ -63,32 +63,22 @@ export async function connectToDomainDatabase(
       dbName: targetDbName,
       bufferCommands: false,
       maxPoolSize: domain === "db_catalog" ? 20 : 10, // Dedicated connection pool sizing per domain
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 1500,
-      connectTimeoutMS: 1500,
-      socketTimeoutMS: 3000,
+      minPoolSize: 0,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 30000,
     };
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Database connection timeout (1.5s limit) for domain: ${domain}`)),
-        1500
-      )
-    );
-
-    cached.promise = Promise.race([
-      mongoose.connect(mongodbUri, opts).then((mongooseInstance) => {
-        logTelemetry({
-          trace_id: traceId,
-          domain_tag: domain,
-          tenant_id: tenantId,
-          level: "INFO",
-          message: `Connected successfully to domain pool [${domain} -> ${targetDbName}]`,
-        });
-        return mongooseInstance;
-      }),
-      timeoutPromise,
-    ]);
+    cached.promise = mongoose.connect(mongodbUri, opts).then((mongooseInstance) => {
+      logTelemetry({
+        trace_id: traceId,
+        domain_tag: domain,
+        tenant_id: tenantId,
+        level: "INFO",
+        message: `Connected successfully to domain pool [${domain} -> ${targetDbName}]`,
+      });
+      return mongooseInstance;
+    });
   }
 
   try {
