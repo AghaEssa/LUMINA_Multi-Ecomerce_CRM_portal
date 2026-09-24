@@ -352,7 +352,7 @@ export function CategoryPortalPage({
                   }`}
                   title="2-Column Grid (Compact View)"
                 >
-                  <span>田 2 Grid</span>
+                  <span> Grid</span>
                 </button>
                 <button
                   onClick={() => setViewMode("scroll")}
@@ -363,7 +363,7 @@ export function CategoryPortalPage({
                   }`}
                   title="Horizontal Scrollable Row"
                 >
-                  <span>↔️ Swipe</span>
+                  <span>Swipe</span>
                 </button>
               </div>
 

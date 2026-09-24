@@ -8,7 +8,6 @@ import { DEFAULT_PRODUCTS, type ProductItem } from "@/lib/products";
 import { DEFAULT_CATEGORIES, type CategoryItem } from "@/lib/categories";
 import { ProductCard } from "@/components/common/ProductCard";
 import { useCartContext } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
 
 type ProductDetailsModalProps = {
   product: ProductItem | null;
@@ -72,21 +71,18 @@ export function ProductDetailsModal({
   );
 
   const { addToCart } = useCartContext();
-  const { requireAuth } = useAuth();
 
   const handleAdd = () => {
     if (activeProduct) {
-      requireAuth(() => {
-        setAdded(true);
-        addToCart({
-          product: activeProduct,
-          quantity: quantity,
-          size: selectedSize,
-          openDrawer: false,
-        });
-        if (onAddToCart) onAddToCart();
-        setTimeout(() => setAdded(false), 2000);
-      }, activeProduct);
+      setAdded(true);
+      addToCart({
+        product: activeProduct,
+        quantity: quantity,
+        size: selectedSize,
+        openDrawer: false,
+      });
+      if (onAddToCart) onAddToCart();
+      setTimeout(() => setAdded(false), 2000);
     }
   };
 

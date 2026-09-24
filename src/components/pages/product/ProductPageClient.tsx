@@ -13,7 +13,6 @@ import type { ProductItem } from "@/lib/products";
 import type { CategoryItem } from "@/lib/categories";
 import { useCart } from "@/hooks/useCart";
 import { useCartContext } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
 
 type ProductPageClientProps = {
   product: ProductItem;
@@ -30,7 +29,6 @@ export function ProductPageClient({
 }: ProductPageClientProps) {
   const router = useRouter();
   const { cartCount, addToCart } = useCart(0);
-  const { requireAuth } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>(product.image);
   const [selectedSize, setSelectedSize] = useState<string>("M");
@@ -62,17 +60,15 @@ export function ProductPageClient({
   const { addToCart: addToCartContext } = useCartContext();
 
   const handleAdd = () => {
-    requireAuth(() => {
-      setAdded(true);
-      addToCart(quantity);
-      addToCartContext({
-        product,
-        quantity,
-        size: selectedSize,
-        openDrawer: false,
-      });
-      setTimeout(() => setAdded(false), 2000);
-    }, product);
+    setAdded(true);
+    addToCart(quantity);
+    addToCartContext({
+      product,
+      quantity,
+      size: selectedSize,
+      openDrawer: false,
+    });
+    setTimeout(() => setAdded(false), 2000);
   };
 
   return (

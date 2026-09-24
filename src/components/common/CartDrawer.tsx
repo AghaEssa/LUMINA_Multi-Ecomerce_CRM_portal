@@ -3,8 +3,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/common/Icons";
 import { useCartContext, type CartItem } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { ItemQuickViewModal } from "@/components/common/ItemQuickViewModal";
 
 const CATEGORY_META: Record<string, { name: string; icon: string }> = {
@@ -20,6 +22,8 @@ const CATEGORY_META: Record<string, { name: string; icon: string }> = {
 };
 
 export function CartDrawer() {
+  const router = useRouter();
+  const { user } = useAuth();
   const {
     cartItems,
     isCartOpen,
@@ -128,12 +132,12 @@ export function CartDrawer() {
                 Shopping Cart
               </h2>
               <span className="rounded-full bg-amber-400 text-slate-950 text-[11px] font-black px-2.5 py-0.5 shadow-xs whitespace-nowrap shrink-0">
-                {cartItems.reduce((acc, i) => acc + i.quantity, 0)} Items
+                {cartItems.length} {cartItems.length === 1 ? "Product" : "Products"}
               </span>
               {isMultiCategory && (
                 <span className="text-[11px] font-bold text-ocean-700 dark:text-amber-300 bg-ocean-50 dark:bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-ocean-200 dark:border-amber-400/20 whitespace-nowrap hidden sm:inline-flex items-center gap-1 shrink-0">
                   <span>📁</span>
-                  <span>{categoryCount} Categories Grid</span>
+                  <span>{categoryCount} {categoryCount === 1 ? "Category" : "Categories"}</span>
                 </span>
               )}
             </div>
@@ -149,10 +153,10 @@ export function CartDrawer() {
                         ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs"
                         : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
-                    title="Masonry Category Grid View (Dense Packing)"
+                    title="view"
                   >
                     <Icon name="Grid" className="h-3 w-3" />
-                    <span>Grid View</span>
+                    <span>Grid</span>
                   </button>
                   <button
                     onClick={() => setViewLayout("stack")}
@@ -161,10 +165,10 @@ export function CartDrawer() {
                         ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs"
                         : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
-                    title="Single Column Stack List View"
+                    title="view"
                   >
                     <Icon name="List" className="h-3 w-3" />
-                    <span>List View</span>
+                    <span>List</span>
                   </button>
                 </div>
               )}
@@ -229,7 +233,8 @@ export function CartDrawer() {
                             {group.name}
                           </h3>
                           <p className="text-[10px] text-slate-400 font-semibold">
-                            {group.groupCount} {group.groupCount === 1 ? "item" : "items"}
+                            {group.items.length} {group.items.length === 1 ? "product" : "products"}
+                            {group.groupCount > group.items.length ? ` • ${group.groupCount} units` : ""}
                           </p>
                         </div>
                       </div>
@@ -393,9 +398,17 @@ export function CartDrawer() {
                 </Link>
 
                 <button
+                  onClick={() => {
+                    closeCart();
+                    if (user) {
+                      router.push("/checkout");
+                    } else {
+                      router.push("/login?callbackUrl=/checkout");
+                    }
+                  }}
                   className="rounded-2xl bg-[#ffb800] hover:bg-[#f5b000] active:scale-[0.99] py-3.5 px-4 text-center font-extrabold text-slate-950 text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>Login to checkout</span>
+                  <span>{user ? "Proceed to Checkout" : "Login to Checkout"}</span>
                   <Icon name="ArrowRight" className="h-4 w-4 stroke-[2.2]" />
                 </button>
               </div>

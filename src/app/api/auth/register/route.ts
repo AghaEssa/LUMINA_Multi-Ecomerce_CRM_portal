@@ -6,9 +6,15 @@ import { registerSchema, validateRequest } from "@/lib/validation";
 import { signAccessToken, signRefreshToken, getCookieOptions, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, ACCESS_TOKEN_EXPIRY_SEC, REFRESH_TOKEN_EXPIRY_SEC } from "@/lib/tokens";
 import { ValidationError, formatApiErrorResponse } from "@/lib/errors";
 import { logAuditEvent, extractRequestMeta } from "@/lib/audit";
+import { checkRateLimit, createRateLimitResponse, applyRateLimitHeaders, RateLimitPresets } from "@/lib/rateLimit";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
+  const rateLimitResult = checkRateLimit(req, RateLimitPresets.AUTH);
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   const { ipAddress, userAgent } = extractRequestMeta(req);
 
   try {
@@ -88,7 +94,7 @@ export async function POST(req: Request) {
     response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, getCookieOptions(ACCESS_TOKEN_EXPIRY_SEC));
     response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, getCookieOptions(REFRESH_TOKEN_EXPIRY_SEC));
 
-    return response;
+    return applyRateLimitHeaders(response, rateLimitResult);
   } catch (err) {
     const errorPayload = formatApiErrorResponse(err);
     const statusCode = err && typeof err === "object" && "statusCode" in err ? (err.statusCode as number) : 500;

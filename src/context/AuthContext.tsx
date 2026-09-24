@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       closeAuthModal();
       closeProfileModal();
       closeSecurityModal();
-      window.location.reload();
+      window.location.href = "/";
     }
   }, [closeAuthModal, closeProfileModal, closeSecurityModal]);
 

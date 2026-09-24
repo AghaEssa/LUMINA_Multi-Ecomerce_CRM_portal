@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ProductItem } from "@/lib/products";
 import { useAuth } from "@/context/AuthContext";
 
@@ -41,6 +41,7 @@ type CartContextType = {
   cartItems: CartItem[];
   isCartOpen: boolean;
   cartCount: number;
+  productCount: number;
   subtotal: number;
   toast: ToastState;
   toasts: ToastItem[];
@@ -56,13 +57,127 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const INITIAL_CART_ITEMS: CartItem[] = [];
+const LOCAL_STORAGE_GUEST_KEY = "lumina_guest_cart_v1";
+const getUserStorageKey = (userId: string) => `lumina_user_cart_${userId}`;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const { user, openAuthModal } = useAuth();
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  
+  const previousUserRef = useRef<string | null>(null);
+
+  // 1. Initial Load on Mount (Reads Guest Cart or User Cart)
+  useEffect(() => {
+    try {
+      if (user) {
+        const userSaved = localStorage.getItem(getUserStorageKey(user.id));
+        const guestSaved = localStorage.getItem(LOCAL_STORAGE_GUEST_KEY);
+        
+        let initialUserItems: CartItem[] = userSaved ? JSON.parse(userSaved) : [];
+        let guestItems: CartItem[] = guestSaved ? JSON.parse(guestSaved) : [];
+
+        if (guestItems.length > 0) {
+          // Merge guest items into user cart
+          guestItems.forEach((gItem) => {
+            const idx = initialUserItems.findIndex((uItem) => uItem.id === gItem.id);
+            if (idx > -1) {
+              initialUserItems[idx].quantity += gItem.quantity;
+            } else {
+              initialUserItems.push(gItem);
+            }
+          });
+          localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
+          localStorage.setItem(getUserStorageKey(user.id), JSON.stringify(initialUserItems));
+        }
+
+        setCartItems(initialUserItems);
+        previousUserRef.current = user.id;
+      } else {
+        const guestSaved = localStorage.getItem(LOCAL_STORAGE_GUEST_KEY);
+        if (guestSaved) {
+          const parsed = JSON.parse(guestSaved);
+          if (Array.isArray(parsed)) {
+            setCartItems(parsed);
+          }
+        }
+      }
+    } catch {
+      // ignore storage errors
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [user]);
+
+  // 2. React to Auth State Changes (Login / Logout / Switch User)
+  useEffect(() => {
+    if (!isLoaded || isAuthLoading) return;
+
+    const currentUserId = user?.id || null;
+    const prevUserId = previousUserRef.current;
+
+    if (prevUserId !== currentUserId) {
+      previousUserRef.current = currentUserId;
+
+      if (currentUserId) {
+        // User just logged in! Merge guest cart into user cart.
+        try {
+          const guestSaved = localStorage.getItem(LOCAL_STORAGE_GUEST_KEY);
+          const userSaved = localStorage.getItem(getUserStorageKey(currentUserId));
+
+          let userItems: CartItem[] = userSaved ? JSON.parse(userSaved) : [];
+          let guestItems: CartItem[] = guestSaved ? JSON.parse(guestSaved) : [];
+
+          // If current state has guest items, include them too
+          if (cartItems.length > 0 && guestItems.length === 0) {
+            guestItems = cartItems;
+          }
+
+          if (guestItems.length > 0) {
+            guestItems.forEach((gItem) => {
+              const idx = userItems.findIndex((uItem) => uItem.id === gItem.id);
+              if (idx > -1) {
+                userItems[idx].quantity += gItem.quantity;
+              } else {
+                userItems.push(gItem);
+              }
+            });
+            localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
+          }
+
+          localStorage.setItem(getUserStorageKey(currentUserId), JSON.stringify(userItems));
+          setCartItems(userItems);
+        } catch {
+          // ignore storage errors
+        }
+      } else {
+        // User logged out! Reset cart state to empty guest cart.
+        setCartItems([]);
+        try {
+          localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
+        } catch {
+          // ignore storage errors
+        }
+      }
+    }
+  }, [user, isAuthLoading, isLoaded, cartItems]);
+
+  // 3. Save active cartItems to appropriate localStorage key whenever cartItems changes
+  useEffect(() => {
+    if (!isLoaded || isAuthLoading) return;
+
+    try {
+      if (user) {
+        localStorage.setItem(getUserStorageKey(user.id), JSON.stringify(cartItems));
+      } else {
+        localStorage.setItem(LOCAL_STORAGE_GUEST_KEY, JSON.stringify(cartItems));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [cartItems, user, isAuthLoading, isLoaded]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -132,15 +247,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = useCallback(
     (options: AddToCartOptions) => {
-      if (!user) {
-        openAuthModal("login", options.product, () => {
-          performAddToCart({ ...options, openDrawer: true });
-        });
-        return;
-      }
       performAddToCart(options);
     },
-    [user, openAuthModal, performAddToCart]
+    [performAddToCart]
   );
 
   const removeFromCart = useCallback((id: string) => {
@@ -159,7 +268,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
-  }, []);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_GUEST_KEY);
+      if (user) {
+        localStorage.removeItem(getUserStorageKey(user.id));
+      }
+    } catch {
+      // ignore
+    }
+  }, [user]);
 
   const cartCount = useMemo(() => {
     return cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -180,11 +297,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
   }, [toasts]);
 
+  const productCount = useMemo(() => cartItems.length, [cartItems]);
+
   const value = useMemo(
     () => ({
       cartItems,
       isCartOpen,
       cartCount,
+      productCount,
       subtotal,
       toast: legacyToast,
       toasts,
@@ -225,3 +345,4 @@ export function useCartContext() {
   }
   return context;
 }
+

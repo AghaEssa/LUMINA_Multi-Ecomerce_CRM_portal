@@ -13,7 +13,7 @@ type TrendingProductsProps = {
 export const FEATURED_TRENDING_ITEMS: ProductItem[] = [
   {
     title: "High-Waist Yoga Leggings",
-    slug: "high-waist-yoga-leggings",
+    slug: "hm-high-waist-yoga-leggings",
     categorySlug: "clothes",
     subCategory: "Women's Activewear",
     price: 29.99,
@@ -28,7 +28,7 @@ export const FEATURED_TRENDING_ITEMS: ProductItem[] = [
   },
   {
     title: "Premium Cotton Hoodie",
-    slug: "premium-cotton-hoodie",
+    slug: "north-face-cotton-zip-hoodie",
     categorySlug: "clothes",
     subCategory: "Outerwear & Hoodies",
     price: 39.99,
@@ -43,7 +43,7 @@ export const FEATURED_TRENDING_ITEMS: ProductItem[] = [
   },
   {
     title: "Women's Floral Summer Dress",
-    slug: "womens-floral-summer-dress",
+    slug: "zara-womens-floral-sundress",
     categorySlug: "clothes",
     subCategory: "Dresses & Skirts",
     price: 39.99,
@@ -58,7 +58,7 @@ export const FEATURED_TRENDING_ITEMS: ProductItem[] = [
   },
   {
     title: "Slim Fit Stretch Jeans",
-    slug: "slim-fit-stretch-jeans",
+    slug: "levis-511-slim-fit-jeans",
     categorySlug: "clothes",
     subCategory: "Bottoms & Pants",
     price: 49.99,

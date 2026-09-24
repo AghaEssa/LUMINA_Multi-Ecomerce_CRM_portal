@@ -10,6 +10,11 @@ const AUTH_ROUTES = ["/login", "/register"];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // 0. Redirect legacy /dashboard requests to /account
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+    return NextResponse.redirect(new URL("/account", req.url));
+  }
+
   const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
@@ -38,9 +43,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Authenticated users visiting /login or /register -> Redirect to /dashboard
+  // 2. Authenticated users visiting /login or /register -> Redirect to callbackUrl or /account
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") || "/account";
+    return NextResponse.redirect(new URL(callbackUrl, req.url));
   }
 
   return NextResponse.next();

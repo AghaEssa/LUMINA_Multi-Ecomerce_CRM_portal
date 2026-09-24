@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/common/Icons";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
@@ -36,6 +37,7 @@ export function Header({
   activeNav = "storefront",
   onNavClick,
 }: HeaderProps) {
+  const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -43,9 +45,9 @@ export function Header({
 
   const { t } = useLanguage();
   const { user, logout, openAuthModal, openProfileModal, openSecurityModal } = useAuth();
-  const { cartCount: ctxCount, openCart } = useCartContext();
+  const { cartCount: ctxCount, productCount, openCart } = useCartContext();
   const { openWishlist, wishlistCount } = useWishlist();
-  const displayCartCount = ctxCount;
+  const displayCartCount = productCount;
 
   // Auto-close profile dropdown when clicking outside, scrolling, or pressing Escape
   useEffect(() => {
@@ -130,15 +132,14 @@ export function Header({
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-[#075570] dark:bg-[#0d1527] text-white shadow-xl border-b border-white/10 dark:border-slate-800 backdrop-blur-md transition-transform duration-300 ease-in-out ${
-        isVisible ? "translate-y-0" : "-translate-y-full pointer-events-none shadow-none"
-      }`}
+      className={`sticky top-0 z-50 bg-[#075570] dark:bg-[#0d1527] text-white shadow-xl border-b border-white/10 dark:border-slate-800 backdrop-blur-md transition-transform duration-300 ease-in-out ${isVisible ? "translate-y-0" : "-translate-y-full pointer-events-none shadow-none"
+        }`}
     >
 
       {/* Topmost Production Utility Bar */}
       <div className="bg-transparent text-white/90 text-[11px] font-medium border-b border-white/10 py-2 hidden sm:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          
+
           {/* Left Side: Language Switcher & Phone Support Link */}
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
@@ -261,9 +262,6 @@ export function Header({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Theme Toggle (Light/Dark Mode) */}
-          <ThemeToggle />
-
           {/* Search Button */}
           <button
             onClick={onOpenSearch}
@@ -281,7 +279,7 @@ export function Header({
                 if (user) {
                   setProfileOpen((prev) => !prev);
                 } else {
-                  openAuthModal("login");
+                  router.push("/login?callbackUrl=/account");
                 }
               }}
               className="nav-icon flex items-center justify-center p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 transition relative"
@@ -317,7 +315,7 @@ export function Header({
                   </p>
                 </div>
 
-                {/* 4 Main Nav Rows: Profile, Wishlist, Shopping Cart, 2FA Security, Sign Out */}
+                {/* Main Nav Rows: Profile, Wishlist, Shopping Cart, 2FA Security, Theme, Sign Out */}
                 <div className="mt-2 space-y-1">
                   {/* 1. Profile */}
                   <button
@@ -379,7 +377,10 @@ export function Header({
                     <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
                   </button>
 
-                  {/* 5. Sign Out */}
+                  {/* 5. Theme / Appearance Switcher Row */}
+                  <ThemeToggle variant="dropdown-row" />
+
+                  {/* 6. Sign Out */}
                   <button
                     onClick={() => {
                       setProfileOpen(false);
@@ -400,7 +401,7 @@ export function Header({
             onClick={openCart}
             className="nav-icon relative flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer"
             aria-label="Shopping Cart"
-            title="Shopping Cart"
+            title={`Shopping Cart (${productCount} ${productCount === 1 ? "Product" : "Products"}${ctxCount > productCount ? `, ${ctxCount} Units` : ""})`}
           >
             <Icon name="ShoppingCart" className="h-5 w-5 text-white" />
             <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-ocean-950 shadow-md">
@@ -423,7 +424,7 @@ export function Header({
       {/* Mobile Drawer Menu (Adaptive & Fully Responsive) */}
       {mobileMenuOpen && (
         <nav className="border-t border-white/10 dark:border-slate-800 bg-[#06465c] dark:bg-[#0b1324] px-4 py-5 lg:hidden animate-fade-in space-y-4">
-          
+
           {/* User Profile Card / Auth CTA in Mobile Drawer */}
           <div className="rounded-2xl bg-white/10 dark:bg-slate-900/80 p-3.5 border border-white/10 flex items-center justify-between">
             {user ? (
@@ -524,12 +525,11 @@ export function Header({
             </div>
           </div>
 
-          {/* Footer Controls: Language Switcher & Theme */}
-          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-            <LanguageSwitcher variant="mobile" />
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-ocean-200 font-semibold">Theme:</span>
-              <ThemeToggle />
+          {/* Footer Controls: Theme & Language Switcher */}
+          <div className="pt-3 border-t border-white/10 space-y-2">
+            <ThemeToggle variant="dropdown-row" className="bg-white/10 text-white hover:bg-white/20 dark:bg-slate-800/80" />
+            <div className="flex items-center justify-between text-xs px-1">
+              <LanguageSwitcher variant="mobile" />
             </div>
           </div>
 

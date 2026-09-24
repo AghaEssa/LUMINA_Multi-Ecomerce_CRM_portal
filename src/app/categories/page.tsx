@@ -3,6 +3,12 @@ import { CategoryGrid } from "@/components/pages/home/CategoryGrid";
 import { SiteHeader } from "@/components/common/Header";
 import { SiteFooter } from "@/components/common/Footer";
 import { Breadcrumbs } from "@/components/common/Breadcrumbs";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "All Categories | LUMINA Multi-Category Storefront",
+  description: "Explore all 8 master categories including clothing, luxury furniture, medical gear, cosmetics, organic food & smart electronics.",
+};
 
 export default async function AllCategoriesPage() {
   const categories = await fetchAllCategories();

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { SiteFooter } from "@/components/common/Footer";
 import { Icon } from "@/components/common/Icons";
@@ -11,9 +12,10 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthModal } from "@/components/common/AuthModal";
 
 export default function CartOverviewPage() {
+  const router = useRouter();
   const { cartItems, subtotal, removeFromCart, updateQuantity, clearCart } =
     useCartContext();
-  const { openAuthModal } = useAuth();
+  const { user } = useAuth();
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{
@@ -349,10 +351,16 @@ export default function CartOverviewPage() {
                 </div>
 
                 <button
-                  onClick={() => openAuthModal("login")}
+                  onClick={() => {
+                    if (user) {
+                      router.push("/checkout");
+                    } else {
+                      router.push("/login?callbackUrl=/checkout");
+                    }
+                  }}
                   className="w-full rounded-2xl bg-[#ffb800] hover:bg-[#f5b000] active:scale-[0.99] py-4 px-6 text-center font-extrabold text-slate-950 text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Login to Checkout</span>
+                  <span>{user ? "Proceed to Checkout" : "Login to Checkout"}</span>
                   <Icon name="ArrowRight" className="h-4 w-4 stroke-[2.2]" />
                 </button>
               </div>

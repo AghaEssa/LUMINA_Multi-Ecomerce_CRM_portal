@@ -794,3 +794,52 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
     return filteredDefaults.length > 0 ? filteredDefaults : DEFAULT_PRODUCTS.slice(0, 8);
   }
 }
+
+export async function getProductBySlug(slug: string): Promise<ProductItem | undefined> {
+  const normSlug = slug.toLowerCase().trim();
+  try {
+    await connectToDatabase();
+    const prodFromDb = (await Product.findOne(
+      { slug: normSlug },
+      { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }
+    ).lean()) as Record<string, any> | null;
+
+    if (prodFromDb) {
+      const title = String(prodFromDb.title);
+      const categorySlug = String(prodFromDb.categorySlug);
+      const image = prodFromDb.image
+        ? String(prodFromDb.image)
+        : getProductDisplayImage({ image: undefined, categorySlug, title, brand: String(prodFromDb.brand) });
+
+      return {
+        title,
+        slug: String(prodFromDb.slug),
+        categorySlug,
+        subCategory: prodFromDb.subCategory ? String(prodFromDb.subCategory) : "General",
+        price: Number(prodFromDb.price),
+        originalPrice: prodFromDb.originalPrice ? Number(prodFromDb.originalPrice) : Math.round(Number(prodFromDb.price) * 1.18 * 100) / 100,
+        discountPercent: prodFromDb.discountPercent ? String(prodFromDb.discountPercent) : "15% OFF",
+        image,
+        brand: String(prodFromDb.brand),
+        rating: Number(prodFromDb.rating),
+        description: prodFromDb.description ? String(prodFromDb.description) : "",
+        inStock: prodFromDb.inStock !== undefined ? Boolean(prodFromDb.inStock) : true,
+        badge: prodFromDb.badge ? String(prodFromDb.badge) : "",
+        tags: prodFromDb.tags ? (prodFromDb.tags as string[]) : ["popular", "in-stock"],
+      };
+    }
+  } catch (error) {
+    console.warn("MongoDB single product query notice:", error instanceof Error ? error.message : error);
+  }
+
+  // Fallback: Check DEFAULT_PRODUCTS for exact match
+  const foundInDefaults = DEFAULT_PRODUCTS.find((p) => p.slug.toLowerCase() === normSlug);
+  if (foundInDefaults) {
+    return {
+      ...foundInDefaults,
+      image: getProductDisplayImage(foundInDefaults),
+    };
+  }
+
+  return undefined;
+}

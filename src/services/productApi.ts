@@ -1,5 +1,5 @@
 import { getCategories, DEFAULT_CATEGORIES, type CategoryItem } from "@/lib/categories";
-import { getProductsByCategory, DEFAULT_PRODUCTS, type ProductItem } from "@/lib/products";
+import { getProductsByCategory, getProductBySlug, DEFAULT_PRODUCTS, type ProductItem } from "@/lib/products";
 import { type DomainTag, logTelemetry, createTraceId } from "@/lib/telemetry";
 
 // Circuit Breaker State per Domain
@@ -109,24 +109,29 @@ export async function fetchCategoryBySlug(slug: string): Promise<CategoryItem | 
 }
 
 export async function fetchProductsByCategory(categorySlug: string): Promise<ProductItem[]> {
+  const normalizedSlug = categorySlug.toLowerCase().trim();
   const fallback = DEFAULT_PRODUCTS.filter(
-    (p) => p.categorySlug.toLowerCase() === categorySlug.toLowerCase()
+    (p) => p.categorySlug.toLowerCase() === normalizedSlug
   );
 
   return await executeWithCircuitBreaker(
     "db_catalog",
-    async () => await getProductsByCategory(categorySlug),
-    fallback.length > 0 ? fallback : DEFAULT_PRODUCTS,
-    `fetchProductsByCategory(${categorySlug})`
+    async () => await getProductsByCategory(normalizedSlug),
+    fallback,
+    `fetchProductsByCategory(${normalizedSlug})`
   );
 }
 
 export async function fetchProductBySlug(slug: string): Promise<ProductItem | undefined> {
-  let product = DEFAULT_PRODUCTS.find((p) => p.slug === slug);
-  if (!product) {
-    product = DEFAULT_PRODUCTS.find((p) => slug.includes(p.slug) || p.slug.includes(slug));
-  }
-  return product || DEFAULT_PRODUCTS[0];
+  const normalizedSlug = slug.toLowerCase().trim();
+  const fallback = DEFAULT_PRODUCTS.find((p) => p.slug.toLowerCase() === normalizedSlug);
+
+  return await executeWithCircuitBreaker(
+    "db_catalog",
+    async () => await getProductBySlug(normalizedSlug),
+    fallback,
+    `fetchProductBySlug(${normalizedSlug})`
+  );
 }
 
 export async function fetchSimilarProducts(

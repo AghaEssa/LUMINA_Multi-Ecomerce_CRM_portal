@@ -7,7 +7,6 @@ import { Icon } from "@/components/common/Icons";
 import type { ProductItem } from "@/lib/products";
 import { useCartContext } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 
 type ProductCardProps = {
@@ -26,7 +25,6 @@ export function ProductCard({
   const router = useRouter();
   const { addToCart } = useCartContext();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { requireAuth } = useAuth();
   const { t } = useLanguage();
   const [added, setAdded] = useState(false);
 
@@ -35,14 +33,12 @@ export function ProductCard({
   const handleAdd = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      requireAuth(() => {
-        setAdded(true);
-        addToCart({ product, quantity: 1, openDrawer: false });
-        if (onAddToCart) onAddToCart();
-        setTimeout(() => setAdded(false), 1500);
-      }, product);
+      setAdded(true);
+      addToCart({ product, quantity: 1, openDrawer: false });
+      if (onAddToCart) onAddToCart();
+      setTimeout(() => setAdded(false), 1500);
     },
-    [addToCart, product, onAddToCart, requireAuth]
+    [addToCart, product, onAddToCart]
   );
 
   const handleCardClick = useCallback(() => {
@@ -95,11 +91,10 @@ export function ProductCard({
                 e.stopPropagation();
                 toggleWishlist(product);
               }}
-              className={`grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border shadow-md transition-all duration-200 ${
-                wishlist
+              className={`grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border shadow-md transition-all duration-200 ${wishlist
                   ? "bg-rose-500 text-white border-rose-500 scale-110"
                   : "bg-white/90 text-slate-700 border-slate-200/80 hover:text-rose-500 hover:bg-white dark:bg-slate-900/90 dark:border-slate-700"
-              }`}
+                }`}
               title="Wishlist"
             >
               <span className="text-[11px] sm:text-xs">{wishlist ? "❤️" : "🤍"}</span>
@@ -163,11 +158,10 @@ export function ProductCard({
         {/* Compact CTA Button */}
         <button
           onClick={handleAdd}
-          className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-300 ${
-            added
+          className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2 sm:py-3 px-2 sm:px-4 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-300 ${added
               ? "bg-emerald-600 text-white shadow-md"
               : "bg-[#ffb800] hover:bg-[#f5b000] text-[#0f172a] shadow-sm active:scale-[0.98]"
-          }`}
+            }`}
         >
           <Icon name={added ? "Check" : "ShoppingCart"} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span className="truncate">{added ? t("Added") : t("Add to Cart")}</span>
