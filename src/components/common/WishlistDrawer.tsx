@@ -44,7 +44,7 @@ export function WishlistDrawer() {
               <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
                 My Wishlist
               </h2>
-              <span className="rounded-full bg-rose-500 text-white text-[11px] font-black px-2.5 py-0.5 shadow-xs">
+              <span className="rounded-full bg-amber-400 text-slate-950 text-[11px] font-black px-2.5 py-0.5 shadow-xs">
                 {wishlistItems.length} Items
               </span>
             </div>

@@ -177,7 +177,7 @@ function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#075570] hover:bg-[#053d52] dark:bg-amber-400 dark:hover:bg-amber-500 dark:text-slate-950 text-white font-black text-sm py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 mt-3 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+          className="w-full bg-[#0284c7] hover:bg-[#0369a1] dark:bg-amber-400 dark:hover:bg-amber-500 dark:text-slate-950 text-white font-black text-sm py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 mt-3 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -214,7 +214,7 @@ export default function RegisterPage() {
     <main className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-slate-950 text-slate-900 dark:text-white relative overflow-hidden font-sans">
       
       {/* Left Branded Showcase Panel (Hidden on Mobile, Visible on Desktop) */}
-      <div className="lg:col-span-6 xl:col-span-7 hidden lg:flex flex-col justify-between p-12 lg:p-16 relative bg-gradient-to-br from-[#052b39] via-[#075570] to-[#041d27] text-white overflow-hidden">
+      <div className="lg:col-span-6 xl:col-span-7 hidden lg:flex flex-col justify-between p-12 lg:p-16 relative bg-gradient-to-br from-[#082f49] via-[#0369a1] to-[#0f172a] text-white overflow-hidden">
         {/* Subtle Background Pattern & Ambient Glows */}
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -293,7 +293,7 @@ export default function RegisterPage() {
         <div className="my-auto flex items-center justify-center w-full">
           <Suspense fallback={
             <div className="relative w-full max-w-[440px] rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
-              <div className="h-8 w-8 mx-auto border-4 border-[#075570] border-t-transparent rounded-full animate-spin mb-4" />
+              <div className="h-8 w-8 mx-auto border-4 border-[#0284c7] border-t-transparent rounded-full animate-spin mb-4" />
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Loading Sign Up...</p>
             </div>
           }>

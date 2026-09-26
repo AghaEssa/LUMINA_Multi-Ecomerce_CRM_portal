@@ -32,7 +32,7 @@ export default function ProductErrorBoundary({
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <button
             onClick={() => reset()}
-            className="px-5 py-2.5 rounded-xl bg-[#075570] hover:bg-[#06465c] text-white text-xs font-bold transition shadow-sm"
+            className="px-5 py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold transition shadow-sm"
           >
             Retry Loading
           </button>

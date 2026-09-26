@@ -194,7 +194,7 @@ export function CategoryPortalPage({
       {/* Category Hero Header Banner */}
       <section
         id="category-hero"
-        className="relative overflow-hidden bg-gradient-to-br from-[#075570] via-[#06465c] to-[#042d3c] dark:from-[#0d1527] dark:via-[#111827] dark:to-[#090d16] text-white py-10 lg:py-14 shadow-xl border-b dark:border-slate-800"
+        className="relative overflow-hidden bg-gradient-to-br from-[#0369a1] via-[#0284c7] to-[#0ea5e9] dark:from-[#082f49] dark:via-[#0c4a6e] dark:to-[#0f172a] text-white py-10 lg:py-14 shadow-xl border-b dark:border-slate-800"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-400/20 via-transparent to-transparent pointer-events-none" />
 
@@ -252,7 +252,7 @@ export function CategoryPortalPage({
                   />
 
                   <div className="absolute inset-0 bg-gradient-to-t from-[#042d3c] via-slate-950/30 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#075570]/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0284c7]/60 via-transparent to-transparent" />
 
                   <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
                     <span className="rounded-full bg-slate-950/70 backdrop-blur-md text-amber-300 font-bold text-[10px] uppercase tracking-wider px-3 py-1 border border-white/20 shadow-md">
@@ -301,9 +301,9 @@ export function CategoryPortalPage({
                     setActiveSubCategory(sub);
                     if (activeNavTab === "trending") setActiveNavTab("storefront");
                   }}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
+                  className={`shrink-0 rounded-full px-4.5 py-2 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "bg-[#075570] text-white shadow-md shadow-ocean-700/20 scale-105 ring-2 ring-ocean-400"
+                      ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/20 scale-105 ring-2 ring-sky-300"
                       : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"
                   }`}
                 >
@@ -328,7 +328,7 @@ export function CategoryPortalPage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search within ${category.name} store...`}
-                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ocean-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
               {searchQuery && (
                 <button
@@ -347,7 +347,7 @@ export function CategoryPortalPage({
                   onClick={() => setViewMode("grid2")}
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition flex items-center gap-1 ${
                     viewMode === "grid2"
-                      ? "bg-white dark:bg-slate-900 text-ocean-700 dark:text-amber-400 shadow-sm"
+                      ? "bg-white dark:bg-slate-900 text-[#0284c7] dark:text-amber-400 shadow-sm"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
                   }`}
                   title="2-Column Grid (Compact View)"
@@ -358,7 +358,7 @@ export function CategoryPortalPage({
                   onClick={() => setViewMode("scroll")}
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition flex items-center gap-1 ${
                     viewMode === "scroll"
-                      ? "bg-white dark:bg-slate-900 text-ocean-700 dark:text-amber-400 shadow-sm"
+                      ? "bg-white dark:bg-slate-900 text-[#0284c7] dark:text-amber-400 shadow-sm"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
                   }`}
                   title="Horizontal Scrollable Row"
@@ -369,7 +369,7 @@ export function CategoryPortalPage({
 
               <button
                 onClick={() => setMobileFilterOpen((prev) => !prev)}
-                className="lg:hidden flex items-center gap-2 rounded-2xl bg-[#075570] text-white px-3.5 py-2 text-xs font-bold shadow"
+                className="lg:hidden flex items-center gap-2 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-2 text-xs font-bold shadow transition cursor-pointer"
               >
                 <Icon name="Filter" className="h-4 w-4" />
                 <span>Filter ({activeFilterCount})</span>
@@ -380,7 +380,7 @@ export function CategoryPortalPage({
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as SortOption)}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-500 cursor-pointer"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
                 >
                   <option value="featured">Featured Selection</option>
                   <option value="price-asc">Price: Low to High</option>
@@ -400,7 +400,7 @@ export function CategoryPortalPage({
               </span>
 
               {activeNavTab === "trending" && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-ocean-950 px-3 py-1 text-xs font-black">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-slate-950 px-3 py-1 text-xs font-black">
                   Mode: {category.name} Trending
                   <button onClick={() => setActiveNavTab("storefront")}>
                     <Icon name="X" className="h-3.5 w-3.5" />
@@ -409,16 +409,16 @@ export function CategoryPortalPage({
               )}
 
               {activeSubCategory !== "All" && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-100 dark:bg-ocean-950 px-3 py-1 text-xs font-bold text-ocean-800 dark:text-ocean-200 border border-ocean-200 dark:border-ocean-800">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800">
                   Section: {activeSubCategory}
                   <button onClick={() => setActiveSubCategory("All")}>
-                    <Icon name="X" className="h-3.5 w-3.5 text-ocean-600" />
+                    <Icon name="X" className="h-3.5 w-3.5 text-sky-600" />
                   </button>
                 </span>
               )}
 
               {filters.maxPrice < maxAvailablePrice && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-100 dark:bg-ocean-950 px-3 py-1 text-xs font-bold text-ocean-800 dark:text-ocean-200 border border-ocean-200 dark:border-ocean-800">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800">
                   Under ${filters.maxPrice}
                   <button onClick={() => setFilters({ ...filters, maxPrice: maxAvailablePrice })}>
                     <Icon name="X" className="h-3.5 w-3.5" />
@@ -429,7 +429,7 @@ export function CategoryPortalPage({
               {filters.selectedBrands.map((brand) => (
                 <span
                   key={brand}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-ocean-100 dark:bg-ocean-950 px-3 py-1 text-xs font-bold text-ocean-800 dark:text-ocean-200 border border-ocean-200 dark:border-ocean-800"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
                 >
                   {brand}
                   <button
@@ -446,7 +446,7 @@ export function CategoryPortalPage({
               ))}
 
               {filters.minRating > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-100 dark:bg-ocean-950 px-3 py-1 text-xs font-bold text-ocean-800 dark:text-ocean-200 border border-ocean-200 dark:border-ocean-800">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800">
                   {filters.minRating}+ Stars
                   <button onClick={() => setFilters({ ...filters, minRating: 0 })}>
                     <Icon name="X" className="h-3.5 w-3.5" />
@@ -526,7 +526,7 @@ export function CategoryPortalPage({
                 )
               ) : (
                 <div className="py-20 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-ocean-50 text-ocean-600 dark:bg-ocean-950 dark:text-ocean-300">
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300">
                     <Icon name="Search" className="h-8 w-8" />
                   </div>
                   <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
@@ -537,7 +537,7 @@ export function CategoryPortalPage({
                   </p>
                   <button
                     onClick={handleResetFilters}
-                    className="mt-5 rounded-2xl bg-[#075570] text-white px-6 py-2.5 text-xs font-bold shadow hover:bg-[#06465c] transition"
+                    className="mt-5 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-6 py-2.5 text-xs font-bold shadow transition"
                   >
                     Reset All Selection & Filters
                   </button>

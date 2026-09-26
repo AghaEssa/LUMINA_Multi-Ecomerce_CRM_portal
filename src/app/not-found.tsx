@@ -45,7 +45,7 @@ export default function NotFound() {
                 <Link
                   key={cat.name}
                   href={cat.href}
-                  className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:border-[#075570] hover:text-[#075570] dark:hover:border-amber-400 dark:hover:text-amber-400 transition shadow-sm"
+                  className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:border-[#0284c7] hover:text-[#0284c7] dark:hover:border-amber-400 dark:hover:text-amber-400 transition shadow-sm"
                 >
                   {cat.name}
                 </Link>
@@ -57,7 +57,7 @@ export default function NotFound() {
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#075570] hover:bg-[#06465c] text-white px-6 py-3 text-xs font-bold shadow-md transition"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-6 py-3 text-xs font-bold shadow-md transition"
             >
               <Icon name="ArrowRight" className="h-4 w-4 rotate-180" />
               <span>Return to Homepage</span>

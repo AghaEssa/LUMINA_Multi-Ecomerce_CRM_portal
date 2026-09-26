@@ -47,12 +47,12 @@ export function FilterSidebar({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-ocean-50 text-ocean-600 dark:bg-ocean-950/60 dark:text-ocean-300">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300">
             <Icon name="Filter" className="h-4 w-4" />
           </div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Filters</h3>
           {activeCount > 0 && (
-            <span className="rounded-full bg-ocean-600 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-full bg-[#0284c7] px-2 py-0.5 text-[10px] font-bold text-white">
               {activeCount}
             </span>
           )}
@@ -61,7 +61,7 @@ export function FilterSidebar({
         {activeCount > 0 && (
           <button
             onClick={onReset}
-            className="text-xs font-bold text-ocean-600 hover:text-ocean-700 dark:text-ocean-400 dark:hover:text-ocean-300 transition"
+            className="text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition"
           >
             Clear all
           </button>
@@ -83,7 +83,7 @@ export function FilterSidebar({
               max={filters.maxPrice}
               value={filters.minPrice}
               onChange={(e) => handlePriceChange(Number(e.target.value) || 0, filters.maxPrice)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ocean-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
           <div>
@@ -94,7 +94,7 @@ export function FilterSidebar({
               max={maxAvailablePrice || 1000}
               value={filters.maxPrice}
               onChange={(e) => handlePriceChange(filters.minPrice, Number(e.target.value) || 1000)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ocean-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
         </div>
@@ -106,12 +106,12 @@ export function FilterSidebar({
           max={maxAvailablePrice || 600}
           value={filters.maxPrice}
           onChange={(e) => handlePriceChange(filters.minPrice, Number(e.target.value))}
-          className="w-full accent-ocean-600 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
+          className="w-full accent-[#0284c7] h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
         />
 
         <div className="flex justify-between text-[11px] font-semibold text-slate-400">
           <span>${filters.minPrice}</span>
-          <span className="font-bold text-ocean-700 dark:text-ocean-300">Max: ${filters.maxPrice}</span>
+          <span className="font-bold text-sky-700 dark:text-sky-300">Max: ${filters.maxPrice}</span>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function FilterSidebar({
                   key={brand}
                   className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold cursor-pointer transition ${
                     isSelected
-                      ? "bg-ocean-50 text-ocean-700 font-bold border border-ocean-200 dark:bg-ocean-950/80 dark:text-ocean-300 dark:border-ocean-800"
+                      ? "bg-sky-50 text-sky-700 font-bold border border-sky-200 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800"
                       : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   }`}
                 >
@@ -138,11 +138,11 @@ export function FilterSidebar({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleBrand(brand)}
-                      className="rounded text-ocean-600 focus:ring-ocean-500 h-4 w-4 accent-ocean-600"
+                      className="rounded text-sky-600 focus:ring-sky-500 h-4 w-4 accent-[#0284c7]"
                     />
                     <span>{brand}</span>
                   </div>
-                  {isSelected && <Icon name="Check" className="h-3.5 w-3.5 text-ocean-600" />}
+                  {isSelected && <Icon name="Check" className="h-3.5 w-3.5 text-sky-600" />}
                 </label>
               );
             })}
@@ -165,7 +165,7 @@ export function FilterSidebar({
                 onClick={() => handleRatingChange(rating)}
                 className={`flex items-center justify-center gap-1 rounded-xl py-2 px-2 text-xs font-bold transition border ${
                   isSelected
-                    ? "bg-ocean-700 text-white border-ocean-700 shadow-md shadow-ocean-700/20"
+                    ? "bg-[#0284c7] text-white border-[#0284c7] shadow-md shadow-sky-500/20"
                     : "border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >

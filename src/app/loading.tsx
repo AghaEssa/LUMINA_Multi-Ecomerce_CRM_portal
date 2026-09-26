@@ -13,12 +13,12 @@ export default function GlobalLoading() {
         {/* Spinner ring */}
         <div className="relative h-12 w-12 mx-auto">
           <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
-          <div className="absolute inset-0 rounded-full border-4 border-[#075570] dark:border-amber-400 border-t-transparent animate-spin" />
+          <div className="absolute inset-0 rounded-full border-4 border-[#0284c7] dark:border-amber-400 border-t-transparent animate-spin" />
         </div>
 
         {/* Text */}
         <div className="space-y-1.5">
-          <p className="text-xs font-black uppercase tracking-widest text-[#075570] dark:text-amber-400">
+          <p className="text-xs font-black uppercase tracking-widest text-[#0284c7] dark:text-amber-400">
             LUMINA Storefront
           </p>
           <p className="text-xs font-bold text-slate-500 dark:text-slate-400">

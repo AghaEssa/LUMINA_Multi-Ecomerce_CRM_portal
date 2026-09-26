@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { verifyAccessToken, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/tokens";
+import { verifyAccessToken, verifyRefreshToken, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/tokens";
 
 // Protected routes requiring authentication
 const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/profile", "/settings", "/account"];
@@ -15,26 +15,35 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/account", req.url));
   }
 
-  const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isProtectedRoute = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+  const isAuthRoute = AUTH_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   // Extract tokens from cookies
   const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
-  let isAuthenticated = false;
+  let hasValidAccessToken = false;
+  let hasValidRefreshToken = false;
 
   if (accessToken) {
     const payload = await verifyAccessToken(accessToken);
     if (payload) {
-      isAuthenticated = true;
+      hasValidAccessToken = true;
     }
   }
 
-  // If access token expired but refresh token exists, treat as candidate for session renewal
-  if (!isAuthenticated && refreshToken) {
-    isAuthenticated = true; // Refresh token route will handle renewal
+  if (refreshToken) {
+    const refreshPayload = await verifyRefreshToken(refreshToken);
+    if (refreshPayload) {
+      hasValidRefreshToken = true;
+    }
   }
+
+  const isAuthenticated = hasValidAccessToken || hasValidRefreshToken;
 
   // 1. Unauthenticated users trying to access protected paths -> Redirect to /login
   if (isProtectedRoute && !isAuthenticated) {
@@ -43,8 +52,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Authenticated users visiting /login or /register -> Redirect to callbackUrl or /account
-  if (isAuthRoute && isAuthenticated) {
+  // 2. Only redirect users AWAY from /login or /register if they have a strictly valid ACCESS TOKEN.
+  // If only refreshToken is present, allow /login and /register to load so user can re-authenticate or client can refresh.
+  if (isAuthRoute && hasValidAccessToken) {
     const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") || "/account";
     return NextResponse.redirect(new URL(callbackUrl, req.url));
   }
@@ -54,10 +64,15 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/dashboard",
     "/dashboard/:path*",
+    "/admin",
     "/admin/:path*",
+    "/profile",
     "/profile/:path*",
+    "/settings",
     "/settings/:path*",
+    "/account",
     "/account/:path*",
     "/login",
     "/register",

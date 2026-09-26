@@ -15,7 +15,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-[#075570] hover:bg-[#06465c] text-white shadow-md shadow-ocean-700/20 active:scale-[0.98]",
+    "bg-[#0284c7] hover:bg-[#0369a1] text-white shadow-md shadow-sky-500/20 active:scale-[0.98]",
   secondary:
     "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm active:scale-[0.98]",
   ghost:
@@ -23,7 +23,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   danger:
     "bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 active:scale-[0.98]",
   accent:
-    "bg-amber-400 hover:bg-amber-500 text-ocean-950 font-black shadow-md active:scale-[0.98]",
+    "bg-amber-400 hover:bg-amber-500 text-slate-950 font-black shadow-md active:scale-[0.98]",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

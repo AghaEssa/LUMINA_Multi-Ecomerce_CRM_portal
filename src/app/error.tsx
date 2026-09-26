@@ -41,7 +41,7 @@ export default function SegmentErrorBoundary({
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => reset()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#075570] hover:bg-[#06465c] text-white px-5 py-2.5 text-xs font-bold shadow-md transition"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-5 py-2.5 text-xs font-bold shadow-md transition"
             >
               <span>Try Again</span>
             </button>

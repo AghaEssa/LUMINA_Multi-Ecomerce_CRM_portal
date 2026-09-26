@@ -31,6 +31,7 @@ export function CartDrawer() {
     subtotal,
     removeFromCart,
     updateQuantity,
+    saveForLater,
   } = useCartContext();
 
   const [viewLayout, setViewLayout] = useState<"grid" | "stack">("grid");
@@ -135,7 +136,7 @@ export function CartDrawer() {
                 {cartItems.length} {cartItems.length === 1 ? "Product" : "Products"}
               </span>
               {isMultiCategory && (
-                <span className="text-[11px] font-bold text-ocean-700 dark:text-amber-300 bg-ocean-50 dark:bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-ocean-200 dark:border-amber-400/20 whitespace-nowrap hidden sm:inline-flex items-center gap-1 shrink-0">
+                <span className="text-[11px] font-bold text-sky-700 dark:text-amber-300 bg-sky-50 dark:bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-amber-400/20 whitespace-nowrap hidden sm:inline-flex items-center gap-1 shrink-0">
                   <span>📁</span>
                   <span>{categoryCount} {categoryCount === 1 ? "Category" : "Categories"}</span>
                 </span>
@@ -225,7 +226,7 @@ export function CartDrawer() {
                     {/* Category Header inside Box */}
                     <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="grid h-7 w-7 place-items-center rounded-xl bg-[#075570] text-amber-300 shadow-sm shrink-0">
+                        <div className="grid h-7 w-7 place-items-center rounded-xl bg-[#0284c7] text-white shadow-sm shrink-0">
                           <Icon name={group.icon} className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0">
@@ -291,7 +292,7 @@ export function CartDrawer() {
                                   {item.title}
                                 </button>
 
-                                {/* Action Buttons: Quick View Eye + Red Delete Trash */}
+                                {/* Action Buttons: Quick View Eye + Save for Later Bookmark + Red Delete Trash */}
                                 <div className="flex items-center gap-1 shrink-0">
                                   <button
                                     onClick={() => setInspectingItem(item)}
@@ -299,6 +300,14 @@ export function CartDrawer() {
                                     title="Quick item inspector detail"
                                   >
                                     <Icon name="Eye" className="h-3.5 w-3.5" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => saveForLater(item.id)}
+                                    className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-1 rounded-lg transition"
+                                    title="Save for later"
+                                  >
+                                    <Icon name="Bookmark" className="h-3.5 w-3.5" />
                                   </button>
 
                                   <button

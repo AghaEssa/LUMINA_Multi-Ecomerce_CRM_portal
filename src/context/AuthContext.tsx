@@ -52,7 +52,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/auth/me", { method: "GET" });
+      let res = await fetch("/api/auth/me", { method: "GET" });
+
+      if (res.status === 401) {
+        // Access token might be expired. Attempt refresh using refresh token cookie.
+        const refreshRes = await fetch("/api/auth/refresh", { method: "POST" });
+        if (refreshRes.ok) {
+          res = await fetch("/api/auth/me", { method: "GET" });
+        }
+      }
+
       const data = await res.json();
       if (res.ok && data.success && data.user) {
         setUser(data.user);
@@ -71,13 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAuth]);
 
   const openAuthModal = useCallback(
-    (mode: AuthModalMode = "login", product: ProductItem | null = null, onSuccess?: () => void) => {
-      setAuthModalMode(mode);
-      setPendingProduct(product);
-      if (onSuccess) {
-        setPendingAction(() => onSuccess);
-      }
-      setIsAuthModalOpen(true);
+    (mode: AuthModalMode = "login", _product: ProductItem | null = null, _onSuccess?: () => void) => {
+      const targetPage = mode === "register" ? "/register" : "/login";
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/account";
+      const callbackUrl = currentPath !== "/login" && currentPath !== "/register" ? currentPath : "/account";
+      window.location.href = `${targetPage}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
     },
     []
   );

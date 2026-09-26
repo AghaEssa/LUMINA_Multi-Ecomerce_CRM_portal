@@ -15,6 +15,7 @@ import { LuminaLogo } from "@/components/common/LuminaLogo";
 import { ProfileModal } from "@/components/common/ProfileModal";
 import { Security2FAModal } from "@/components/common/Security2FAModal";
 import { WishlistDrawer } from "@/components/common/WishlistDrawer";
+import { NotificationsModal } from "@/components/common/NotificationsModal";
 
 type HeaderProps = {
   cartCount?: number;
@@ -39,6 +40,7 @@ export function Header({
 }: HeaderProps) {
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -132,7 +134,7 @@ export function Header({
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-[#075570] dark:bg-[#0d1527] text-white shadow-xl border-b border-white/10 dark:border-slate-800 backdrop-blur-md transition-transform duration-300 ease-in-out ${isVisible ? "translate-y-0" : "-translate-y-full pointer-events-none shadow-none"
+      className={`sticky top-0 z-50 bg-gradient-to-r from-[#0369a1] via-[#0284c7] to-[#0ea5e9] dark:from-[#082f49] dark:via-[#0c4a6e] dark:to-[#0f172a] text-white shadow-xl border-b border-white/10 dark:border-slate-800 backdrop-blur-md transition-transform duration-300 ease-in-out ${isVisible ? "translate-y-0" : "-translate-y-full pointer-events-none shadow-none"
         }`}
     >
 
@@ -229,7 +231,7 @@ export function Header({
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden items-center gap-8 text-sm font-bold text-white/90 lg:flex">
+        <nav className="hidden items-center gap-7 text-sm font-extrabold text-white lg:flex">
           {categoryNavItems
             ? categoryNavItems.map((item) => {
               const isActive = activeNav === item.key;
@@ -237,12 +239,12 @@ export function Header({
                 <button
                   key={item.key}
                   onClick={() => onNavClick && onNavClick(item.key)}
-                  className={`relative py-1 transition duration-200 flex items-center gap-1.5 font-bold ${isActive ? "text-amber-300" : "text-white/90 hover:text-white"
+                  className={`relative py-1 transition duration-200 flex items-center gap-1.5 font-extrabold tracking-wide ${isActive ? "text-amber-300 drop-shadow-xs" : "text-white hover:text-amber-200"
                     }`}
                 >
                   <span>{item.name}</span>
                   <span
-                    className={`absolute bottom-0 left-0 h-0.5 bg-amber-300 transition-all duration-300 ${isActive ? "w-full" : "w-0 hover:w-full"
+                    className={`absolute bottom-0 left-0 h-1 rounded-full bg-amber-400 shadow-sm transition-all duration-300 ${isActive ? "w-full" : "w-0 hover:w-full"
                       }`}
                   />
                 </button>
@@ -252,173 +254,135 @@ export function Header({
               <Link
                 key={link.name}
                 href={link.href}
-                className="relative py-1 transition hover:text-white group flex items-center gap-1.5"
+                className="relative py-1 transition hover:text-amber-200 group flex items-center gap-1.5 font-extrabold tracking-wide text-white"
               >
                 <span>{t(link.name)}</span>
-                <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-white transition-all duration-300 group-hover:w-full" />
+                <span className="absolute bottom-0 left-0 h-1 rounded-full w-0 bg-amber-400 shadow-sm transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
         </nav>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Search Button */}
+        {/* Action Controls matching template screenshot (Wishlist, Orders, Account, Cart) - Laptop/PC Desktop Only */}
+        <div className="hidden lg:flex items-center gap-2 sm:gap-4 text-white">
+
+          {/* 1. Wishlist Button */}
           <button
-            onClick={onOpenSearch}
-            className="nav-icon flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
-            aria-label="Search Categories & Products"
-            title="Search Categories & Products"
+            onClick={openWishlist}
+            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+            title="My Wishlist"
           >
-            <Icon name="Search" className="h-5 w-5 text-white" />
+            <div className="relative h-6 w-6 flex items-center justify-center">
+              <Icon name="Heart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Wishlist</span>
           </button>
 
-          {/* User Profile Popover Button (Visible on Mobile & Desktop) */}
-          <div className="relative" ref={profileDropdownRef}>
-            <button
-              onClick={() => {
-                if (user) {
-                  setProfileOpen((prev) => !prev);
-                } else {
-                  router.push("/login?callbackUrl=/account");
-                }
-              }}
-              className="nav-icon flex items-center justify-center p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 transition relative"
-              aria-label="User Profile & Accounts"
-              title={user ? `${user.name || user.email} (${user.role})` : "Login / Signup"}
-            >
+          {/* 2. Orders Button */}
+          <button
+            onClick={() => {
+              if (user) {
+                router.push("/account?tab=orders");
+              } else {
+                router.push("/login?callbackUrl=/account?tab=orders");
+              }
+            }}
+            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer group px-1 py-0.5"
+            title="My Orders"
+          >
+            <div className="relative h-6 w-6 flex items-center justify-center">
+              <Icon name="Package" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+            </div>
+            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Orders</span>
+          </button>
+
+          {/* 3. Account Button (Perfectly Aligned Avatar / User Icon) */}
+          <button
+            onClick={() => {
+              if (user) {
+                router.push("/account");
+              } else {
+                router.push("/login?callbackUrl=/account");
+              }
+            }}
+            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+            aria-label="User Profile & Accounts"
+            title={user ? `${user.name || user.email} (${user.role})` : "My Account"}
+          >
+            <div className="relative h-6 w-6 flex items-center justify-center">
               {user ? (
-                /* Decent Dark Green Circle with Bright Green Initial */
-                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-[#0b3328] border border-emerald-500/50 text-[#10b981] font-black text-xs sm:text-sm flex items-center justify-center shadow-inner">
+                <div className="h-6 w-6 rounded-full bg-amber-400 text-slate-950 font-black text-[12px] flex items-center justify-center shadow-md ring-2 ring-white/50 group-hover:scale-110 transition-transform">
                   {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
                 </div>
               ) : (
-                /* Empty Profile Silhouette Avatar Icon */
-                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white">
-                  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
-                </div>
+                <Icon name="User" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
               )}
-
               {user && (
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-[#075570] dark:border-[#0d1527]" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0284c7]" />
               )}
-            </button>
-
-            {/* Profile Dropdown for Logged In User */}
-            {profileOpen && user && (
-              <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 text-slate-800 dark:text-slate-100 z-50 animate-fade-in">
-                {/* Header: ONLY Customer Name (no badges, no title label, no email) */}
-                <div className="border-b border-slate-100 pb-2.5 dark:border-slate-800 px-2">
-                  <p className="text-sm font-black text-slate-900 dark:text-white truncate">
-                    {user.name || user.email.split("@")[0]}
-                  </p>
-                </div>
-
-                {/* Main Nav Rows: Profile, Wishlist, Shopping Cart, 2FA Security, Theme, Sign Out */}
-                <div className="mt-2 space-y-1">
-                  {/* 1. Profile */}
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      openProfileModal();
-                    }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Icon name="User" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
-                      <span>Profile</span>
-                    </span>
-                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
-
-                  {/* 2. Wishlist */}
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      openWishlist();
-                    }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-sm">❤️</span>
-                      <span>Wishlist ({wishlistCount})</span>
-                    </span>
-                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
-
-                  {/* 3. Shopping Cart */}
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      openCart();
-                    }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Icon name="ShoppingCart" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
-                      <span>Shopping Cart ({displayCartCount})</span>
-                    </span>
-                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
-
-                  {/* 4. 2FA Security */}
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      openSecurityModal();
-                    }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Icon name="Lock" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
-                      <span>2FA Security</span>
-                    </span>
-                    <Icon name="ChevronRight" className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
-
-                  {/* 5. Theme / Appearance Switcher Row */}
-                  <ThemeToggle variant="dropdown-row" />
-
-                  {/* 6. Sign Out */}
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      logout();
-                    }}
-                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-left pt-2 border-t border-slate-100 dark:border-slate-800/80"
-                  >
-                    <span>Sign Out</span>
-                    <Icon name="X" className="h-3.5 w-3.5 text-rose-500" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Cart Icon with Dynamic Badge */}
-          <button
-            onClick={openCart}
-            className="nav-icon relative flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer"
-            aria-label="Shopping Cart"
-            title={`Shopping Cart (${productCount} ${productCount === 1 ? "Product" : "Products"}${ctxCount > productCount ? `, ${ctxCount} Units` : ""})`}
-          >
-            <Icon name="ShoppingCart" className="h-5 w-5 text-white" />
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-ocean-950 shadow-md">
-              {displayCartCount}
+            </div>
+            <span className="text-[11px] font-extrabold tracking-wide mt-1 truncate max-w-[64px] text-white">
+              {user ? (user.name ? user.name.split(" ")[0] : "Agha") : "Account"}
             </span>
           </button>
 
-          {/* Mobile Menu Toggle (Hamburger Icon) */}
+          {/* 4. Cart Button */}
           <button
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="nav-icon lg:hidden flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition"
-            aria-label="Toggle Mobile Navigation Menu"
-            title="Navigation Menu"
+            onClick={openCart}
+            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+            aria-label="Shopping Cart"
+            title={`Shopping Cart (${productCount} Products)`}
           >
-            <Icon name={mobileMenuOpen ? "X" : "Menu"} className="h-6 w-6 text-white" />
+            <div className="relative h-6 w-6 flex items-center justify-center">
+              <Icon name="ShoppingCart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+              <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+                {displayCartCount}
+              </span>
+            </div>
+            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Cart</span>
           </button>
         </div>
+
+        {/* Mobile Top Right Utilities: Compact Language Switcher & Phone Support Button */}
+        <div className="flex lg:hidden items-center gap-2 text-white">
+          <LanguageSwitcher />
+          <a
+            href="tel:+919974692496"
+            className="grid h-7 w-7 place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition border border-white/20"
+            title="Call Support +919974692496"
+          >
+            <svg
+              className="h-3.5 w-3.5 text-white fill-none stroke-current stroke-[2.2]"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.332-5.123-3.63-6.455-6.455l1.293-.97c.362-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      {/* Mobile Prominent Search Bar (As shown in screenshot 1) */}
+      <div className="lg:hidden px-4 pb-3 pt-0.5">
+        <button
+          onClick={onOpenSearch}
+          className="w-full flex items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl px-4 py-2.5 shadow-xs hover:border-amber-400 transition cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500 text-xs font-medium truncate">
+            <Icon name="Search" className="h-4 w-4 text-slate-400 shrink-0" />
+            <span className="truncate">Search Storefront, Brands &amp; Items...</span>
+          </div>
+          <div className="grid h-7 w-7 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0">
+            <Icon name="SlidersHorizontal" className="h-3.5 w-3.5" />
+          </div>
+        </button>
       </div>
 
       {/* Mobile Drawer Menu (Adaptive & Fully Responsive) */}
@@ -459,7 +423,7 @@ export function Header({
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    openAuthModal("login");
+                    router.push("/login?callbackUrl=/account");
                   }}
                   className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-ocean-950 text-xs font-extrabold shadow transition"
                 >
@@ -468,7 +432,7 @@ export function Header({
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    openAuthModal("register");
+                    router.push("/register?callbackUrl=/account");
                   }}
                   className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition"
                 >
@@ -535,6 +499,12 @@ export function Header({
 
         </nav>
       )}
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </header>
   );
 }

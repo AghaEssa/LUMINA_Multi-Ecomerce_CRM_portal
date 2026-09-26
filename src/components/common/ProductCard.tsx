@@ -84,20 +84,44 @@ export function ProductCard({
             />
           )}
 
-          {/* Top Right Floating Actions */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-10">
+          {/* Top Right Floating Actions (Wishlist & Share matching reference screenshot 1) */}
+          <div className="absolute top-2.5 right-2.5 flex flex-col gap-2 z-10">
+            {/* Wishlist Button */}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleWishlist(product);
               }}
-              className={`grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border shadow-md transition-all duration-200 ${wishlist
-                  ? "bg-rose-500 text-white border-rose-500 scale-110"
-                  : "bg-white/90 text-slate-700 border-slate-200/80 hover:text-rose-500 hover:bg-white dark:bg-slate-900/90 dark:border-slate-700"
-                }`}
-              title="Wishlist"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-md hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+              title={wishlist ? "Remove from Wishlist" : "Add to Wishlist"}
             >
-              <span className="text-[11px] sm:text-xs">{wishlist ? "❤️" : "🤍"}</span>
+              <Icon
+                name="Heart"
+                className={`h-4 w-4 transition-colors duration-200 ${
+                  wishlist ? "fill-rose-500 text-rose-500" : "text-slate-400 hover:text-rose-500 stroke-[1.8]"
+                }`}
+              />
+            </button>
+
+            {/* Share Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof navigator !== "undefined" && navigator.share) {
+                  navigator.share({
+                    title: product.title,
+                    url: window.location.origin + `/product/${product.slug}`,
+                  }).catch(() => {});
+                } else if (typeof navigator !== "undefined") {
+                  navigator.clipboard.writeText(window.location.origin + `/product/${product.slug}`);
+                }
+              }}
+              className="grid h-8 w-8 place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-md hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+              title="Share Product"
+            >
+              <Icon name="Share2" className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 stroke-[1.8]" />
             </button>
           </div>
         </div>

@@ -39,7 +39,7 @@ export function HeroSection({ onOpenSearch }: HeroSectionProps) {
             {/* Main Headline */}
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
               {t("Find What Elevates")}{" "}
-              <span className="bg-gradient-to-r from-ocean-700 via-ocean-600 to-ocean-500 bg-clip-text text-transparent dark:from-amber-300 dark:via-amber-400 dark:to-yellow-200">
+              <span className="bg-gradient-to-r from-[#0284c7] via-[#0369a1] to-[#d97706] bg-clip-text text-transparent dark:from-amber-300 dark:via-amber-400 dark:to-yellow-200">
                 {t("Your Everyday Life.")}
               </span>
             </h1>
@@ -53,17 +53,17 @@ export function HeroSection({ onOpenSearch }: HeroSectionProps) {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1">
               <Link
                 href="#categories"
-                className="group inline-flex items-center gap-2.5 rounded-2xl bg-ocean-700 dark:bg-amber-400 dark:text-slate-950 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-ocean-700/25 dark:shadow-amber-400/10 transition-all duration-300 hover:bg-ocean-800 dark:hover:bg-amber-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                className="group inline-flex items-center gap-2.5 rounded-2xl bg-[#f59e0b] hover:bg-[#d97706] text-slate-950 px-7 py-3.5 text-sm font-black shadow-lg shadow-amber-500/20 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 <span>{t("Explore 8 Categories")}</span>
-                <Icon name="ArrowRight" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                <Icon name="ArrowRight" className="h-4 w-4 stroke-[2.5] transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 
               <button
                 onClick={onOpenSearch}
-                className="inline-flex items-center gap-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-[#111827]/90 px-6 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm backdrop-blur-md transition duration-300 hover:bg-white hover:border-ocean-400 dark:hover:bg-[#1f293d]"
+                className="inline-flex items-center gap-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-[#111827]/90 px-6 py-3.5 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-xs backdrop-blur-md transition duration-300 hover:bg-white hover:border-amber-400 dark:hover:bg-[#1f293d] cursor-pointer"
               >
-                <Icon name="Search" className="h-4 w-4 text-ocean-600 dark:text-amber-400" />
+                <Icon name="Search" className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                 <span>{t("Search Storefront")}</span>
               </button>
             </div>
@@ -75,7 +75,7 @@ export function HeroSection({ onOpenSearch }: HeroSectionProps) {
                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t("Main Categories")}</p>
               </div>
               <div>
-                <p className="text-xl font-black text-ocean-700 dark:text-amber-400">100%</p>
+                <p className="text-xl font-black text-[#d97706] dark:text-amber-400">100%</p>
                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t("Authentic Products")}</p>
               </div>
               <div>

@@ -6,7 +6,7 @@
 const CATEGORY_COLORS: Record<string, { bg: string; accent: string; text: string }> = {
   clothes: { bg: "from-amber-700 via-stone-800 to-slate-900", accent: "#f59e0b", text: "Haute Couture & Wear" },
   furniture: { bg: "from-amber-900 via-amber-950 to-stone-900", accent: "#d97706", text: "Artisan Living & Oak" },
-  utensils: { bg: "from-slate-700 via-[#075570] to-slate-900", accent: "#38bdf8", text: "Culinary & Kitchen" },
+  utensils: { bg: "from-slate-700 via-[#0284c7] to-slate-900", accent: "#38bdf8", text: "Culinary & Kitchen" },
   medical: { bg: "from-teal-800 via-cyan-900 to-slate-950", accent: "#2dd4bf", text: "Clinical & Health Tech" },
   cosmetics: { bg: "from-rose-800 via-pink-950 to-slate-900", accent: "#f43f5e", text: "Botanical Skincare" },
   food: { bg: "from-emerald-800 via-green-950 to-slate-900", accent: "#10b981", text: "Organic Gourmet" },
@@ -48,7 +48,7 @@ export function getProductDisplayImage(product: {
   // Create SVG Data URI Artwork
   const catInfo = CATEGORY_COLORS[product.categorySlug] || {
     bg: "from-slate-800 to-slate-950",
-    accent: "#075570",
+    accent: "#0284c7",
     text: "LUMINA Curated",
   };
 
@@ -60,7 +60,7 @@ export function getProductDisplayImage(product: {
       <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#0f172a"/>
         <stop offset="50%" stop-color="#1e293b"/>
-        <stop offset="100%" stop-color="#075570"/>
+        <stop offset="100%" stop-color="#0284c7"/>
       </linearGradient>
       <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
