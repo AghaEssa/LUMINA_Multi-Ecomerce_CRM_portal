@@ -54,6 +54,10 @@ export default {
           "100%": { opacity: "1" },
         },
       },
+      fontFamily: {
+        sans: ["var(--font-inter)", "Inter", "sans-serif"],
+        heading: ["var(--font-poppins)", "Poppins", "sans-serif"],
+      },
     },
   },
   plugins: [],
