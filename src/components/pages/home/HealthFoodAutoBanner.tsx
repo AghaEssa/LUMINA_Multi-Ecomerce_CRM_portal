@@ -6,12 +6,22 @@ import Link from "next/link";
 import { Icon } from "@/components/common/Icons";
 import { useLanguage } from "@/context/LanguageContext";
 
-const SLIDES = [
+type SlideItem = {
+  id: string;
+  tag?: string;
+  badge?: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  link: string;
+  buttonText: string;
+};
+
+const SLIDES: SlideItem[] = [
   {
     id: "medical-gear",
     title: "FDA Cleared Omron BP Monitors & Theragun Pro",
     subtitle: "Clinical grade digital diagnostics, mobility monitors & deep tissue recovery guns.",
-    
     image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1400&auto=format&fit=crop",
     link: "/category/medical",
     buttonText: "Shop Medical Gear",
@@ -59,14 +69,20 @@ export function HealthFoodAutoBanner() {
         {/* Content Box */}
         <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-14 lg:p-16">
           <div className="lg:col-span-8 space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3">
-              <span className="px-3.5 py-1 rounded-md bg-emerald-500 text-slate-950 text-xs font-black uppercase tracking-widest shadow-md">
-                {t(slide.tag)}
-              </span>
-              <span className="px-3 py-1 rounded-md bg-white/10 text-amber-300 text-xs font-bold border border-white/20">
-                {slide.badge}
-              </span>
-            </div>
+            {(slide.tag || slide.badge) && (
+              <div className="flex items-center gap-3">
+                {slide.tag && (
+                  <span className="px-3.5 py-1 rounded-md bg-emerald-500 text-slate-950 text-xs font-black uppercase tracking-widest shadow-md">
+                    {t(slide.tag)}
+                  </span>
+                )}
+                {slide.badge && (
+                  <span className="px-3 py-1 rounded-md bg-white/10 text-amber-300 text-xs font-bold border border-white/20">
+                    {slide.badge}
+                  </span>
+                )}
+              </div>
+            )}
 
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight uppercase">
               {t(slide.title)}
