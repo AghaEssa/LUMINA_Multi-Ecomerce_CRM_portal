@@ -61,12 +61,12 @@ export function LandingPage({ categories }: { categories: CategoryItem[] }) {
         {/* 6. Shoes Brand Promo Banner */}
         <ShoesBanner />
 
-        {/* 7. Top Deals in Fashion */}
+        {/* 7. Top Deals */}
         <CategoryProductRow
-          title="Top Deals in Fashion"
+          title="Top Deals"
           subtitle="Curated collection of denim jeans, hoodies, summer sundresses & accessories."
-          badge="HOT DEAL"
-          badgeColor="rose"
+           
+         
           products={fashionProducts.length > 0 ? fashionProducts : DEFAULT_PRODUCTS.slice(0, 8)}
           categorySlug="clothes"
         />
@@ -74,9 +74,9 @@ export function LandingPage({ categories }: { categories: CategoryItem[] }) {
         {/* 8. Cosmetics Auto-Slider Banner (Men's Perfume & Women's Makeup) */}
         <CosmeticsAutoBanner />
 
-        {/* 9. Footwear Premium Collection */}
+        {/* 9. Premium Footwear */}
         <CategoryProductRow
-          title="Footwear Premium Collection"
+          title="Premium Footwear"
           subtitle="Nike low-tops, athletic sneakers, and leather running shoes."
           badge="POPULAR"
           badgeColor="amber"
@@ -89,9 +89,8 @@ export function LandingPage({ categories }: { categories: CategoryItem[] }) {
 
         {/* 11. Health & Wellness Showcase */}
         <CategoryProductRow
-          title="Health & Wellness Essentials"
-          subtitle="FDA-cleared blood pressure monitors, rehab massage guns & medical gear."
-          badge="CLINICAL"
+          title="Health & Wellness"
+          subtitle="FDA-cleared blood pressure monitors, rehab massage guns & medical gear." 
           badgeColor="emerald"
           products={healthProducts.length > 0 ? healthProducts : DEFAULT_PRODUCTS.slice(0, 8)}
           categorySlug="medical"
@@ -100,9 +99,9 @@ export function LandingPage({ categories }: { categories: CategoryItem[] }) {
         {/* 12. Tech & Electronics Spotlight Banner */}
         <TechBanner />
 
-        {/* 13. Tech Essentials */}
+        {/* 13. Electronics */}
         <CategoryProductRow
-          title="Tech Essentials"
+          title="Electronics"
           subtitle="Sony ANC wireless headphones, Apple Watch Series 9 & smart EV chargers."
           badge="NEW TECH"
           badgeColor="blue"

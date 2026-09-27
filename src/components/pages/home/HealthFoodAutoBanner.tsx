@@ -9,20 +9,17 @@ import { useLanguage } from "@/context/LanguageContext";
 const SLIDES = [
   {
     id: "medical-gear",
-    tag: "Clinical Healthcare & Rehab",
     title: "FDA Cleared Omron BP Monitors & Theragun Pro",
     subtitle: "Clinical grade digital diagnostics, mobility monitors & deep tissue recovery guns.",
-    badge: "CLINICAL GRADE",
+    
     image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1400&auto=format&fit=crop",
     link: "/category/medical",
     buttonText: "Shop Medical Gear",
   },
   {
-    id: "gourmet-food",
-    tag: "Organic Foods & Beverages",
+    id: "gourmet-food", 
     title: "Borges Tuscan Extra Virgin Olive Oil & Lavazza Coffee",
-    subtitle: "Cold-pressed single origin Italian olive oils & 100% Arabica specialty coffee beans.",
-    badge: "100% ORGANIC",
+    subtitle: "Cold-pressed single origin Italian olive oils & 100% Arabica specialty coffee beans.", 
     image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=1400&auto=format&fit=crop",
     link: "/category/food",
     buttonText: "Explore Gourmet Food",

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { CartProvider } from "@/context/CartContext";
@@ -14,6 +15,20 @@ import { Security2FAModal } from "@/components/common/Security2FAModal";
 import { MobileBottomNav } from "@/components/common/MobileBottomNav";
 import { FloatingActionButtons } from "@/components/common/FloatingActionButtons";
 import { OfflineGuard } from "@/components/common/OfflineGuard";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: `${APP_NAME} | Multi-Category Storefront & Enterprise CRM`,
@@ -34,9 +49,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${inter.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -106,7 +127,7 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body suppressHydrationWarning className="min-h-screen bg-[#f8fafc] dark:bg-[#060b13] text-slate-900 dark:text-slate-100 antialiased overflow-x-clip">
+      <body suppressHydrationWarning className={`${poppins.variable} ${inter.variable} font-sans min-h-screen bg-[#f8fafc] dark:bg-[#060b13] text-slate-900 dark:text-slate-100 antialiased overflow-x-clip`}>
         <div id="google_translate_element" />
         <LanguageProvider>
           <AuthProvider>

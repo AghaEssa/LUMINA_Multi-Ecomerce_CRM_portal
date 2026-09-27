@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,59 @@ import { Icon } from "@/components/common/Icons";
 import type { CategoryItem } from "@/lib/categories";
 import type { ProductItem } from "@/lib/products";
 import { useCart } from "@/hooks/useCart";
+
+const CATEGORY_SLIDES: Record<string, string[]> = {
+  clothing: [
+    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1000&auto=format&fit=crop",
+  ],
+  clothes: [
+    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1000&auto=format&fit=crop",
+  ],
+  furniture: [
+    "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1000&auto=format&fit=crop",
+  ],
+  electronics: [
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=1000&auto=format&fit=crop",
+  ],
+  "smart-devices": [
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=1000&auto=format&fit=crop",
+  ],
+  cosmetics: [
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1000&auto=format&fit=crop",
+  ],
+  medical: [
+    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1631815588090-d4bfec5b1cdb?w=1000&auto=format&fit=crop",
+  ],
+  food: [
+    "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1506617420156-8e4536971650?w=1000&auto=format&fit=crop",
+  ],
+  vehicles: [
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1000&auto=format&fit=crop",
+  ],
+  utensils: [
+    "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=1000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1514986888952-8cd320577b68?w=1000&auto=format&fit=crop",
+  ],
+};
 
 type CategoryPortalPageProps = {
   category: CategoryItem;
@@ -38,6 +91,24 @@ export function CategoryPortalPage({
   const [activeNavTab, setActiveNavTab] = useState<"storefront" | "sections" | "trending" | "brands">("storefront");
   const [selectedProductModal, setSelectedProductModal] = useState<ProductItem | null>(null);
   const [viewMode, setViewMode] = useState<"grid2" | "scroll" | "grid1">("grid2");
+  const [heroImageIdx, setHeroImageIdx] = useState(0);
+
+  const categorySlides = useMemo(() => {
+    const slug = category.slug.toLowerCase();
+    if (CATEGORY_SLIDES[slug]) return CATEGORY_SLIDES[slug];
+    if (category.heroImage || category.image) {
+      return [category.heroImage || category.image];
+    }
+    return ["https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop"];
+  }, [category]);
+
+  useEffect(() => {
+    if (categorySlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setHeroImageIdx((prev) => (prev + 1) % categorySlides.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [categorySlides]);
 
   // Sub-categories list fallback
   const subCategories = useMemo(() => {
@@ -208,7 +279,7 @@ export function CategoryPortalPage({
                   <Icon name={category.icon} className="h-6 w-6" />
                 </div>
                 <span className="rounded-full bg-amber-400 text-ocean-950 font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-sm">
-                  {activeNavTab === "trending" ? `🔥 ${category.name} Trending` : category.badge || "Curated Collection"}
+                  {activeNavTab === "trending" ? ` ${category.name} Trending` : category.badge || "Curated Collection"}
                 </span>
               </div>
 
@@ -241,15 +312,27 @@ export function CategoryPortalPage({
               <div className="absolute -inset-4 rounded-full bg-amber-400/25 blur-3xl opacity-70 " />
 
               <div className="relative w-full max-w-md lg:max-w-none overflow-hidden rounded-3xl border-2 border-white/30 bg-ocean-950/60 shadow-2xl shadow-black/50">
-                <div className="relative aspect-[4/3] w-full overflow-hidden">
-                  <NextImage
-                    src={category.heroImage || category.image || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop"}
-                    alt={`${category.name} Flagship Showcase`}
-                    fill
-                    priority
-                    className="object-cover transition-transform duration-700 group-hover:scale-108"
-                    sizes="(max-width: 1024px) 100vw, 42vw"
-                  />
+                <div className="relative aspect-[4/4] w-full overflow-hidden">
+                  {categorySlides.map((imgSrc, idx) => {
+                    const isActive = idx === heroImageIdx;
+                    return (
+                      <div
+                        key={imgSrc}
+                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                          isActive ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+                        }`}
+                      >
+                        <NextImage
+                          src={imgSrc || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop"}
+                          alt={`${category.name} Flagship Showcase ${idx + 1}`}
+                          fill
+                          priority={idx === 0}
+                          className="object-cover transition-transform duration-700 group-hover:scale-108"
+                          sizes="(max-width: 1024px) 100vw, 42vw"
+                        />
+                      </div>
+                    );
+                  })}
 
                   <div className="absolute inset-0 bg-gradient-to-t from-[#042d3c] via-slate-950/30 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0284c7]/60 via-transparent to-transparent" />
@@ -260,22 +343,7 @@ export function CategoryPortalPage({
                     </span>
                   </div>
 
-                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 p-3.5 backdrop-blur-xl border border-white/30 shadow-2xl flex items-center justify-between z-10">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                          {category.name} Premium Edition
-                        </span>
-                      </div>
-                      <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        {category.itemCount || 50}+ Curated Flagship Items Active
-                      </p>
-                    </div>
-
-                    <span className="rounded-xl bg-amber-400 hover:bg-amber-500 px-3.5 py-2 text-[10px] font-black text-ocean-950 uppercase tracking-widest shadow-md transition cursor-pointer shrink-0">
-                      EXPLORE
-                    </span>
-                  </div>
+                  
 
                 </div>
               </div>
@@ -290,8 +358,8 @@ export function CategoryPortalPage({
         id="sections-bar"
         className="sticky top-0 z-30 bg-white/95 dark:bg-[#0b1324]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-sm transition-colors duration-300"
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5">
+          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar scroll-smooth py-1">
             {subCategories.map((sub) => {
               const isActive = activeSubCategory.toLowerCase() === sub.toLowerCase();
               return (
@@ -301,13 +369,13 @@ export function CategoryPortalPage({
                     setActiveSubCategory(sub);
                     if (activeNavTab === "trending") setActiveNavTab("storefront");
                   }}
-                  className={`shrink-0 rounded-full px-4.5 py-2 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                  className={`shrink-0 rounded-full px-5 py-2 text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                     isActive
-                      ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/20 scale-105 ring-2 ring-sky-300"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"
+                      ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/25 ring-2 ring-sky-300 dark:ring-sky-400 scale-[1.02]"
+                      : "bg-slate-100/90 hover:bg-slate-200/90 text-slate-700 dark:bg-slate-800/90 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
                   }`}
                 >
-                  {sub}
+                  <span>{sub}</span>
                 </button>
               );
             })}

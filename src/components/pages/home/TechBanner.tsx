@@ -26,10 +26,7 @@ export function TechBanner() {
         {/* Content Box */}
         <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-14 lg:p-16">
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-md bg-blue-500 text-white text-xs font-black uppercase tracking-widest shadow-md">
-              <Icon name="Zap" className="h-3.5 w-3.5 text-amber-300" />
-              <span>{t("Tech Spotlight")}</span>
-            </div>
+             
 
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight uppercase">
               {t("Next-Gen Audio & Smart Devices")} <br />

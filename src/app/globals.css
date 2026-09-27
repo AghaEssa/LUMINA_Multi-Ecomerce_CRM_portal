@@ -43,10 +43,19 @@
     @apply scroll-smooth;
   }
   body {
-    @apply bg-[#f8fafc] text-slate-900 antialiased selection:bg-ocean-600 selection:text-white dark:bg-[#090d16] dark:text-slate-100 overflow-x-clip;
+    font-family: var(--font-inter), 'Inter', sans-serif;
+    @apply text-base bg-[#f8fafc] text-slate-900 antialiased selection:bg-ocean-600 selection:text-white dark:bg-[#090d16] dark:text-slate-100 overflow-x-clip;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  button, a {
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
+    @apply font-semibold;
+  }
+  input, select, textarea, button {
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a {
     -webkit-tap-highlight-color: transparent;
   }
 }

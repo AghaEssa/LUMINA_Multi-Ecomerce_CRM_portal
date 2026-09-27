@@ -3,26 +3,24 @@
 import Link from "next/link";
 import { Icon } from "@/components/common/Icons";
 import { useLanguage } from "@/context/LanguageContext";
+import { LuminaLogo } from "@/components/common/LuminaLogo";
 
 export function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-[#082f49] dark:bg-[#031e30] text-slate-100 border-t border-[#0c4a6e] relative overflow-hidden font-sans">
+    <footer className="bg-[#090d16] dark:bg-[#05080e] text-slate-100 border-t border-slate-800/90 relative overflow-hidden font-sans">
       {/* Top Accent Sky Blue Line */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-[#0369a1] via-[#0284c7] to-[#38bdf8]" />
+      <div className="h-1 w-full bg-gradient-to-r from-sky-600 via-sky-400 to-amber-400" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           
           {/* Col 1: Brand & Verified Tagline */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#0284c7] to-[#0ea5e9] text-white font-black text-xl shadow-lg ring-2 ring-white/20">
-                L
-              </div>
-              <span className="text-2xl font-black tracking-[0.2em] text-white">LUMINA</span>
-            </div>
+            <Link href="/" className="inline-block transition hover:opacity-90">
+              <LuminaLogo layout="horizontal" size="md" textColor="text-white" />
+            </Link>
             
             <p className="text-xs sm:text-sm text-sky-100 font-semibold max-w-sm leading-relaxed">
               {t("The premier enterprise multi-category storefront platform designed for seamless shopping, organic product curation, and full-stack CRM management.")}

@@ -291,13 +291,13 @@ export function Header({
           {!isCheckout && (
             <button
               onClick={openWishlist}
-              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+              className="relative flex flex-col items-center justify-center min-w-[54px] px-2 py-1 text-white hover:text-amber-300 transition cursor-pointer group"
               title="My Wishlist"
             >
-              <div className="relative h-6 w-6 flex items-center justify-center">
-                <Icon name="Heart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+              <div className="relative">
+                <Icon name="Heart" className="h-6 w-6 stroke-[2.2] group-hover:scale-105 transition-transform" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-amber-400 text-slate-950 font-black text-[10px] leading-none shadow border border-[#0369a1] pointer-events-none">
                     {wishlistCount}
                   </span>
                 )}
@@ -316,11 +316,11 @@ export function Header({
                   router.push("/login?callbackUrl=/account?tab=orders");
                 }
               }}
-              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer group px-1 py-0.5"
+              className="relative flex flex-col items-center justify-center min-w-[54px] px-2 py-1 text-white hover:text-amber-300 transition cursor-pointer group"
               title="My Orders"
             >
-              <div className="relative h-6 w-6 flex items-center justify-center">
-                <Icon name="Package" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+              <div className="relative">
+                <Icon name="Package" className="h-6 w-6 stroke-[2.2] group-hover:scale-105 transition-transform" />
               </div>
               <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Orders</span>
             </button>
@@ -339,24 +339,18 @@ export function Header({
                 router.push("/login?callbackUrl=/account");
               }
             }}
-            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+            className="relative flex flex-col items-center justify-center min-w-[54px] px-2 py-1 text-white hover:text-amber-300 transition cursor-pointer group"
             aria-label="User Profile & Accounts"
             title={user ? `${user.name || user.email} (${user.role})` : "My Account"}
           >
-            <div className="relative h-6 w-6 flex items-center justify-center">
-              {user ? (
-                <div className="h-6 w-6 rounded-full bg-amber-400 text-slate-950 font-black text-[12px] flex items-center justify-center shadow-md ring-2 ring-white/50 group-hover:scale-110 transition-transform">
-                  {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
-                </div>
-              ) : (
-                <Icon name="User" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
-              )}
+            <div className="relative">
+              <Icon name="User" className="h-6 w-6 stroke-[2.2] group-hover:scale-105 transition-transform" />
               {user && (
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0284c7]" />
+                <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 border border-[#0284c7]" />
               )}
             </div>
             <span className="text-[11px] font-extrabold tracking-wide mt-1 truncate max-w-[64px] text-white">
-              {user ? (user.name ? user.name.split(" ")[0] : "Agha") : "Account"}
+              {user ? (user.name ? user.name.split(" ")[0] : "Account") : "Account"}
             </span>
           </button>
 
@@ -374,13 +368,13 @@ export function Header({
           ) : (
             <button
               onClick={openCart}
-              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+              className="relative flex flex-col items-center justify-center min-w-[54px] px-2 py-1 text-white hover:text-amber-300 transition cursor-pointer group"
               aria-label="Shopping Cart"
-              title={`Shopping Cart (${productCount} Products)`}
+              title={`Shopping Cart (${displayCartCount} Products)`}
             >
-              <div className="relative h-6 w-6 flex items-center justify-center">
-                <Icon name="ShoppingCart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
-                <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+              <div className="relative">
+                <Icon name="ShoppingCart" className="h-6 w-6 stroke-[2.2] group-hover:scale-105 transition-transform" />
+                <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-amber-400 text-slate-950 font-black text-[10px] leading-none shadow border border-[#0369a1] pointer-events-none">
                   {displayCartCount}
                 </span>
               </div>

@@ -153,8 +153,8 @@ export function CartDrawer() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {/* Layout Switcher (Grid vs Stack) */}
-              {isMultiCategory && (
+              {/* Layout Switcher (Grid vs Stack/List) */}
+              {cartItems.length > 0 && (
                 <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
                   <button
                     onClick={() => setViewLayout("grid")}
@@ -163,7 +163,7 @@ export function CartDrawer() {
                         ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs"
                         : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
-                    title="view"
+                    title="Grid View"
                   >
                     <Icon name="Grid" className="h-3 w-3" />
                     <span>Grid</span>
@@ -175,7 +175,7 @@ export function CartDrawer() {
                         ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 shadow-xs"
                         : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
-                    title="view"
+                    title="List View"
                   >
                     <Icon name="List" className="h-3 w-3" />
                     <span>List</span>
@@ -216,7 +216,7 @@ export function CartDrawer() {
                 </button>
               </div>
             ) : (
-              /* True Masonry Dense Column Layout for Categories */
+              /* Masonry / Dense Column Layout for Categories */
               <div
                 className={
                   viewLayout === "grid" && isMultiCategory
@@ -227,7 +227,7 @@ export function CartDrawer() {
                 }
               >
                 {groupedCart.map((group) => (
-                  /* Category Group Box Container Card (break-inside-avoid prevents split cards across columns) */
+                  /* Category Group Box Container Card */
                   <div
                     key={group.slug}
                     className="break-inside-avoid inline-block w-full rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4 space-y-3 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition"
@@ -255,7 +255,7 @@ export function CartDrawer() {
                     </div>
 
                     {/* Items inside this Category Box */}
-                    <div className="space-y-3">
+                    <div className={viewLayout === "grid" && !isMultiCategory ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-3"}>
                       {group.items.map((item) => (
                         <div
                           key={item.id}

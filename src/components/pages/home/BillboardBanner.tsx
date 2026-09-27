@@ -32,13 +32,7 @@ export function BillboardBanner() {
             {/* Left Column: Loot Deal Details */}
             <div className="space-y-6 max-w-3xl">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="rounded-md bg-amber-400 text-slate-950 px-3.5 py-1 text-xs font-black uppercase tracking-widest shadow-md flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
-                  FLASH LOOT DEAL
-                </span>
-                <span className="rounded-md bg-white/15 backdrop-blur-md px-3.5 py-1 text-xs font-bold text-amber-300 border border-white/20">
-                  ⏰ ENDS IN: 04h : 18m : 32s
-                </span>
+                 
               </div>
 
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight uppercase">

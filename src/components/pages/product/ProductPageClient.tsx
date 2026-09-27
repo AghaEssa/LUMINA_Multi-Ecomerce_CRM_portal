@@ -132,21 +132,24 @@ export function ProductPageClient({
                   {/* Top Right Dual Action Floating Buttons */}
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button
-                      className="grid h-10 w-10 place-items-center rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border border-slate-200/80 shadow-md hover:scale-105 transition"
+                      className="grid h-10 w-10 place-items-center rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 shadow-md hover:scale-105 transition cursor-pointer"
                       title="Share"
                     >
-                      🔗
+                      <Icon name="Share2" className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => setWishlist((prev) => !prev)}
-                      className={`grid h-10 w-10 place-items-center rounded-full border shadow-md transition-all ${
-                        wishlist
-                          ? "bg-rose-500 text-white border-rose-500 scale-110"
-                          : "bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border-slate-200/80 hover:text-rose-500"
-                      }`}
+                      className="grid h-10 w-10 place-items-center rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-md hover:scale-105 transition-all cursor-pointer"
                       title="Wishlist"
                     >
-                      {wishlist ? "❤️" : "🤍"}
+                      <Icon
+                        name="Heart"
+                        className={`h-5 w-5 transition-transform ${
+                          wishlist
+                            ? "text-rose-500 fill-rose-500 scale-110"
+                            : "text-slate-600 dark:text-slate-300 hover:text-rose-500"
+                        }`}
+                      />
                     </button>
                   </div>
                 </div>

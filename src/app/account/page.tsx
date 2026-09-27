@@ -39,6 +39,14 @@ function AccountContent() {
   const [copiedReferral, setCopiedReferral] = useState(false);
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
+  const toggleOrderExpand = (orderId: string) => {
+    setExpandedOrders((prev) => ({
+      ...prev,
+      [orderId]: !prev[orderId],
+    }));
+  };
 
   useEffect(() => {
     if (user?.email) {
@@ -458,28 +466,50 @@ function AccountContent() {
                           </div>
                         </div>
 
-                        {/* Order Items List */}
+                        {/* Order Items List (Compact View with Expand/Collapse) */}
                         <div className="space-y-2.5">
-                          {Array.isArray(ord.items) && ord.items.map((it: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between text-xs gap-3">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {it.image && (
-                                  <img
-                                    src={it.image}
-                                    alt={it.title}
-                                    className="h-10 w-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                                  />
-                                )}
-                                <div className="min-w-0">
-                                  <p className="font-bold text-slate-900 dark:text-white truncate">{it.title}</p>
-                                  <p className="text-[10px] text-slate-400">Qty: {it.quantity} {it.size && `• Size: ${it.size}`}</p>
+                          {Array.isArray(ord.items) &&
+                            (expandedOrders[ord.orderId] ? ord.items : ord.items.slice(0, 3)).map(
+                              (it: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between text-xs gap-3">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {it.image && (
+                                      <img
+                                        src={it.image}
+                                        alt={it.title}
+                                        className="h-10 w-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                                      />
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-slate-900 dark:text-white truncate">{it.title}</p>
+                                      <p className="text-[10px] text-slate-400">
+                                        Qty: {it.quantity} {it.size && `• Size: ${it.size}`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span className="font-extrabold text-slate-800 dark:text-slate-200 shrink-0">
+                                    ${it.price ? (Number(it.price) * Number(it.quantity)).toFixed(2) : "0.00"}
+                                  </span>
                                 </div>
-                              </div>
-                              <span className="font-extrabold text-slate-800 dark:text-slate-200 shrink-0">
-                                ${it.price ? (Number(it.price) * Number(it.quantity)).toFixed(2) : "0.00"}
+                              )
+                            )}
+
+                          {Array.isArray(ord.items) && ord.items.length > 3 && (
+                            <button
+                              onClick={() => toggleOrderExpand(ord.orderId)}
+                              className="w-full mt-2 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/80 dark:border-slate-700/80"
+                            >
+                              <span>
+                                {expandedOrders[ord.orderId]
+                                  ? "Collapse order items list"
+                                  : `Show +${ord.items.length - 3} more items in this order`}
                               </span>
-                            </div>
-                          ))}
+                              <Icon
+                                name={expandedOrders[ord.orderId] ? "ChevronUp" : "ChevronDown"}
+                                className="h-3.5 w-3.5 text-amber-500"
+                              />
+                            </button>
+                          )}
                         </div>
 
                         <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px] text-slate-500">

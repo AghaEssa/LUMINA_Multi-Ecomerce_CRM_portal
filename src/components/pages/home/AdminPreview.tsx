@@ -15,7 +15,7 @@ export function AdminPreview() {
           {/* Left Text Content */}
           <div className="lg:col-span-6 space-y-6">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              Enterprise Shopping Experience & Multi-Category Portals
+              Business Solutions
             </h2>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">

@@ -135,11 +135,9 @@ export function TrendingProducts({ onAddToCart, onOpenDetails }: TrendingProduct
         {/* Section Header with Carousel Navigation */}
         <div className="mb-8 flex items-end justify-between border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
           <div>
-            <span className="text-xs font-black uppercase tracking-widest text-ocean-600 dark:text-amber-400">
-              CURATED SELECTION
-            </span>
+             
             <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Trending Products Across Categories
+              Trending Now
             </h2>
           </div>
 

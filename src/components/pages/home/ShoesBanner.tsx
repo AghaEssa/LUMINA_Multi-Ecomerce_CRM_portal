@@ -30,10 +30,7 @@ export function ShoesBanner() {
           {/* Left Text Box */}
           <div className="lg:col-span-7 space-y-6">
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#b8860b] text-white text-xs font-black uppercase tracking-widest shadow-sm">
-                <Icon name="Sparkles" className="h-3.5 w-3.5" />
-                {t("Footwear Edition")}
-              </span>
+               
               <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-widest">
                 Nike • Adidas • Puma • Converse
               </span>
@@ -78,10 +75,7 @@ export function ShoesBanner() {
               <div className="absolute top-4 right-4 bg-slate-900/90 text-amber-300 px-3.5 py-1.5 rounded-md text-xs font-black shadow-lg backdrop-blur-md">
                 40% {t("off")}
               </div>
-              <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white px-4 py-2 rounded-md text-xs font-extrabold shadow-lg backdrop-blur-md flex items-center gap-2">
-                <span>Track Spikes & Boots</span>
-                <span className="text-[#b8860b] font-black">$49.99</span>
-              </div>
+               
             </div>
           </div>
 
