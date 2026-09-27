@@ -12,6 +12,7 @@ import { useCartContext } from "@/context/CartContext";
 import { Security2FAModal } from "@/components/common/Security2FAModal";
 import { ProfileModal } from "@/components/common/ProfileModal";
 import { NotificationsModal } from "@/components/common/NotificationsModal";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 type AccountTab =
   | "account"
@@ -23,7 +24,9 @@ type AccountTab =
   | "refer"
   | "transactions"
   | "notifications"
-  | "support";
+  | "support"
+  | "security"
+  | "theme";
 
 function AccountContent() {
   const router = useRouter();
@@ -148,6 +151,8 @@ function AccountContent() {
     { id: "wallet" as AccountTab, label: "Wallet", icon: "Wallet" as const },
     { id: "transactions" as AccountTab, label: "Transactions", icon: "CreditCard" as const },
     { id: "notifications" as AccountTab, label: "Notifications", icon: "Bell" as const },
+    { id: "security" as AccountTab, label: "2FA Security", icon: "ShieldCheck" as const },
+    { id: "theme" as AccountTab, label: "Theme Mode", icon: "Moon" as const },
     { id: "support" as AccountTab, label: "Support", icon: "HelpCircle" as const },
     { id: "refer" as AccountTab, label: "Refer & Earn", icon: "Gift" as const },
   ];
@@ -172,15 +177,7 @@ function AccountContent() {
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
             </div>
           </div>
-
-          <button
-            onClick={openProfileModal}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-amber-300/80 bg-amber-50 dark:bg-amber-400/10 hover:bg-amber-100 text-[#d97706] dark:text-amber-400 text-xs font-extrabold transition cursor-pointer shrink-0"
-          >
-            <span>✏️</span>
-            <span className="hidden sm:inline">Edit profile</span>
-            <span className="sm:hidden">Edit</span>
-          </button>
+ 
         </div>
 
         {/* 2. Horizontal Tab Navigation Slider (Only for mobile view) */}
@@ -390,6 +387,8 @@ function AccountContent() {
                       <p className="text-xs text-slate-400 font-medium mt-0.5">Earn ₹500 per Referral</p>
                     </div>
                   </button>
+
+                  
 
                 </div>
  
@@ -934,6 +933,90 @@ function AccountContent() {
                       </p>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 10: 2FA SECURITY */}
+            {activeTab === "security" && (
+              <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="ShieldCheck" className="h-6 w-6 text-emerald-500" />
+                    <span>2FA &amp; Account Security</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    Protect your Lumina Account with Two-Factor Authentication and verification codes.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+                        <Icon name="ShieldCheck" className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white">Two-Factor Authentication (2FA)</h4>
+                         
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={openSecurityModal}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition shadow-md cursor-pointer shrink-0"
+                    >
+                      Manage 2FA Settings
+                    </button>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
+                      <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span>Account Protection</span>
+                      </span>
+                      <p className="text-slate-400 font-medium text-[11px]">
+                        Your account is currently protected with standard login &amp; email verification.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
+                      <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Icon name="Lock" className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Password &amp; Credentials</span>
+                      </span>
+                      <p className="text-slate-400 font-medium text-[11px]">
+                        Last updated recently. Ensure you use a strong password with symbols and numbers.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 11: THEME MODE */}
+            {activeTab === "theme" && (
+              <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="Moon" className="h-6 w-6 text-amber-500" />
+                    <span>Theme &amp; Appearance</span>
+                  </h3>
+                  
+                </div>
+
+                <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
+                  <div className="max-w-md">
+                    <label className="text-xs font-black text-slate-900 dark:text-white mb-2 block">
+                      Toggle Active Theme Mode:
+                    </label>
+                    <ThemeToggle variant="dropdown-row" className="bg-white dark:bg-slate-800 p-3 shadow-xs border border-slate-200 dark:border-slate-700" />
+                  </div>
+
+                  <p className="text-xs text-slate-400 font-medium">
+                    Your theme preference is automatically remembered on this browser and applied to all Lumina portal pages.
+                  </p>
                 </div>
               </div>
             )}

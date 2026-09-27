@@ -90,7 +90,7 @@ export function Security2FAModal() {
         return;
       }
 
-      setSuccessMsg("🎉 2FA Activated Successfully!");
+      setSuccessMsg(" 2FA Activated Successfully!");
       setIsSettingUp(false);
       await checkAuth();
     } catch {
