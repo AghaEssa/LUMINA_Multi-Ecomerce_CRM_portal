@@ -11,15 +11,24 @@ export function WishlistDrawer() {
     useWishlist();
   const { addToCart } = useCartContext();
 
-  // Lock background scroll when open
+  // Lock background scroll and hide browser scrollbar when open
   useEffect(() => {
     if (isWishlistOpen) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.documentElement.classList.add("drawer-open");
+      document.body.classList.add("drawer-open");
     } else {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("drawer-open");
+      document.body.classList.remove("drawer-open");
     }
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("drawer-open");
+      document.body.classList.remove("drawer-open");
     };
   }, [isWishlistOpen]);
 

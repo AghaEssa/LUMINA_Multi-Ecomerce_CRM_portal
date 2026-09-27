@@ -104,6 +104,11 @@ export function MobileBottomNav() {
     },
   ];
 
+  // Hide mobile bottom nav on auth & checkout pages
+  if (pathname === "/login" || pathname === "/register" || pathname === "/checkout") {
+    return null;
+  }
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#090e17]/95 backdrop-blur-lg border-t border-slate-200/90 dark:border-slate-800/90 px-2 py-1.5 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] transition-transform duration-200">
       <div className="flex items-center justify-around max-w-md mx-auto">

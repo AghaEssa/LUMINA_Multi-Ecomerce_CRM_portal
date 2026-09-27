@@ -1,19 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Icon } from "@/components/common/Icons";
 import { useCartContext } from "@/context/CartContext";
 
 export function FloatingActionButtons() {
+  const pathname = usePathname();
   const { productCount, openCart } = useCartContext();
   const [mounted, setMounted] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    // Only render floating buttons after client mount and initial page load completes
-    const timer = setTimeout(() => {
+    // Only show floating buttons after entire window load completes & client is fully mounted
+    const handleLoadComplete = () => {
       setMounted(true);
-    }, 300);
+    };
+
+    if (document.readyState === "complete") {
+      setMounted(true);
+    } else {
+      window.addEventListener("load", handleLoadComplete);
+    }
 
     const handleScroll = () => {
       if (window.scrollY > 200) {
@@ -25,7 +33,7 @@ export function FloatingActionButtons() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      clearTimeout(timer);
+      window.removeEventListener("load", handleLoadComplete);
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
@@ -37,7 +45,10 @@ export function FloatingActionButtons() {
     });
   };
 
-  if (!mounted) return null;
+  // Strictly hide floating action buttons while loading, or when on login, register, checkout routes
+  if (!mounted || !pathname || pathname === "/login" || pathname === "/register" || pathname === "/checkout") {
+    return null;
+  }
 
   return (
     <>
@@ -61,11 +72,11 @@ export function FloatingActionButtons() {
 
         {/* Floating WhatsApp Button */}
         <a
-          href="https://wa.me/919974692496"
+          href="https://wa.me/923184095736"
           target="_blank"
           rel="noopener noreferrer"
           className="h-11 w-11 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all duration-200 border border-white/20 group"
-          title="Chat on WhatsApp (+919974692496)"
+          title="Chat on WhatsApp (+92 318 4095736)"
           aria-label="Chat on WhatsApp"
         >
           <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">

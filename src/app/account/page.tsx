@@ -34,6 +34,23 @@ function AccountContent() {
 
   const [activeTab, setActiveTab] = useState<AccountTab>("account");
   const [copiedReferral, setCopiedReferral] = useState(false);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      setIsLoadingOrders(true);
+      fetch(`/api/orders?email=${encodeURIComponent(user.email)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.orders)) {
+            setUserOrders(data.orders);
+          }
+        })
+        .catch((err) => console.error("Error fetching orders:", err))
+        .finally(() => setIsLoadingOrders(false));
+    }
+  }, [user?.email, activeTab]);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab") as AccountTab;
@@ -410,22 +427,87 @@ function AccountContent() {
                   </div>
                 </div>
 
-                {/* Empty State matching Screenshot 1 */}
-                <div className="py-14 text-center space-y-4 max-w-sm mx-auto">
-                  <div className="h-14 w-14 rounded-2xl bg-[#fffbeb] border border-[#fde68a] text-amber-500 flex items-center justify-center mx-auto shadow-2xs">
-                    <Icon name="Package" className="h-7 w-7 text-amber-500" />
+                {isLoadingOrders ? (
+                  <div className="py-16 text-center space-y-3">
+                    <div className="h-8 w-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-xs font-bold text-slate-400">Loading your orders...</p>
                   </div>
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">No Orders Found</h4>
-                    <p className="text-xs text-slate-400 font-medium">You haven&apos;t placed any orders yet.</p>
+                ) : userOrders.length > 0 ? (
+                  <div className="space-y-4">
+                    {userOrders.map((ord: any) => (
+                      <div
+                        key={ord.orderId}
+                        className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+                          <div className="space-y-0.5">
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {ord.orderId}
+                            </span>
+                            <p className="text-[10px] text-slate-400">
+                              Placed on {new Date(ord.createdAt).toLocaleDateString()} at {new Date(ord.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                              {ord.status || "processing"}
+                            </span>
+                            <span className="text-sm font-black text-slate-900 dark:text-amber-300">
+                              ${ord.grandTotal ? Number(ord.grandTotal).toFixed(2) : "0.00"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order Items List */}
+                        <div className="space-y-2.5">
+                          {Array.isArray(ord.items) && ord.items.map((it: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {it.image && (
+                                  <img
+                                    src={it.image}
+                                    alt={it.title}
+                                    className="h-10 w-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                                  />
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-bold text-slate-900 dark:text-white truncate">{it.title}</p>
+                                  <p className="text-[10px] text-slate-400">Qty: {it.quantity} {it.size && `• Size: ${it.size}`}</p>
+                                </div>
+                              </div>
+                              <span className="font-extrabold text-slate-800 dark:text-slate-200 shrink-0">
+                                ${it.price ? (Number(it.price) * Number(it.quantity)).toFixed(2) : "0.00"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px] text-slate-500">
+                          <span>Ship to: <strong className="text-slate-800 dark:text-slate-200">{ord.fullName}</strong> ({ord.city})</span>
+                          <span className="capitalize font-bold text-slate-700 dark:text-slate-300">Payment: {ord.paymentMethod}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <Link
-                    href="/"
-                    className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
-                  >
-                    Start Shopping
-                  </Link>
-                </div>
+                ) : (
+                  /* Empty State */
+                  <div className="py-14 text-center space-y-4 max-w-sm mx-auto">
+                    <div className="h-14 w-14 rounded-2xl bg-[#fffbeb] border border-[#fde68a] text-amber-500 flex items-center justify-center mx-auto shadow-2xs">
+                      <Icon name="Package" className="h-7 w-7 text-amber-500" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">No Orders Found</h4>
+                      <p className="text-xs text-slate-400 font-medium">You haven&apos;t placed any orders yet.</p>
+                    </div>
+                    <Link
+                      href="/"
+                      className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
+                    >
+                      Start Shopping
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
@@ -775,7 +857,7 @@ function AccountContent() {
                     </label>
 
                     <a
-                      href="https://wa.me/919974692496"
+                      href="https://wa.me/923184095736"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-400 text-slate-900 dark:text-white text-xs font-bold block text-center transition shadow-xs"

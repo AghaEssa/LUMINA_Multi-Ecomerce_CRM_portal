@@ -37,15 +37,24 @@ export function CartDrawer() {
   const [viewLayout, setViewLayout] = useState<"grid" | "stack">("grid");
   const [inspectingItem, setInspectingItem] = useState<CartItem | null>(null);
 
-  // Prevent background scrolling when cart drawer is open
+  // Prevent background scrolling and hide main browser scrollbar when cart drawer is open
   useEffect(() => {
     if (isCartOpen) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.documentElement.classList.add("drawer-open");
+      document.body.classList.add("drawer-open");
     } else {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("drawer-open");
+      document.body.classList.remove("drawer-open");
     }
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("drawer-open");
+      document.body.classList.remove("drawer-open");
     };
   }, [isCartOpen]);
 

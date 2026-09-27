@@ -63,27 +63,56 @@
   }
 }
 
-/* Custom Brand Theme Scrollbar */
-html {
+/* Custom Brand Theme Scrollbar - Scoped to HTML (Main Window) */
+html:not(.drawer-open) {
   scrollbar-width: thin;
   scrollbar-color: #0284c7 #0b1324;
 }
 
-::-webkit-scrollbar {
+html:not(.drawer-open)::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-::-webkit-scrollbar-track {
+html:not(.drawer-open)::-webkit-scrollbar-track {
   background: #0b1324;
 }
 
-::-webkit-scrollbar-thumb {
+html:not(.drawer-open)::-webkit-scrollbar-thumb {
   background: #0284c7;
   border-radius: 9999px;
   border: 2px solid #0b1324;
 }
 
-::-webkit-scrollbar-thumb:hover {
+html:not(.drawer-open)::-webkit-scrollbar-thumb:hover {
   background: #38bdf8;
 }
+
+/* Completely remove and hide main window scrollbar when any drawer or modal is active */
+html.drawer-open,
+body.drawer-open {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html.drawer-open::-webkit-scrollbar,
+body.drawer-open::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide scrollbars for internal containers with .no-scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+

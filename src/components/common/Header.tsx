@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Icon } from "@/components/common/Icons";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
@@ -23,6 +23,7 @@ type HeaderProps = {
   category?: CategoryItem;
   activeNav?: "storefront" | "sections" | "trending" | "brands" | "all";
   onNavClick?: (key: "storefront" | "sections" | "trending" | "brands") => void;
+  onReturnToCart?: () => void;
 };
 
 const DEFAULT_NAV_LINKS = [
@@ -37,8 +38,11 @@ export function Header({
   category,
   activeNav = "storefront",
   onNavClick,
+  onReturnToCart,
 }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isCheckout = pathname === "/checkout";
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -146,9 +150,9 @@ export function Header({
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <a
-              href="tel:+919974692496"
+              href="tel:+923184095736"
               className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition cursor-pointer border border-white/20"
-              title="Call +919974692496"
+              title="Call +92 318 4095736"
             >
               <svg
                 className="h-3 w-3 text-white fill-none stroke-current stroke-[2.2]"
@@ -160,7 +164,7 @@ export function Header({
                   d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.332-5.123-3.63-6.455-6.455l1.293-.97c.362-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
                 />
               </svg>
-              <span className="tracking-tight">+919974692496</span>
+              <span className="tracking-tight">+92 318 4095736</span>
             </a>
           </div>
 
@@ -225,84 +229,110 @@ export function Header({
 
         {/* Brand Logo - Clicking takes back to Main Multi-Category Store Homepage */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="group flex items-center transition hover:opacity-90" title="Go to Lumina Main Storefront">
+          <Link
+            href="/"
+            onClick={(e) => {
+              if (isCheckout && onReturnToCart) {
+                e.preventDefault();
+                onReturnToCart();
+              }
+            }}
+            className="group flex items-center transition hover:opacity-90"
+            title="Go to Lumina Main Storefront"
+          >
             <LuminaLogo layout="horizontal" size="md" textColor="text-white" />
           </Link>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden items-center gap-7 text-sm font-extrabold text-white lg:flex">
-          {categoryNavItems
-            ? categoryNavItems.map((item) => {
-              const isActive = activeNav === item.key;
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => onNavClick && onNavClick(item.key)}
-                  className={`relative py-1 transition duration-200 flex items-center gap-1.5 font-extrabold tracking-wide ${isActive ? "text-amber-300 drop-shadow-xs" : "text-white hover:text-amber-200"
-                    }`}
-                >
-                  <span>{item.name}</span>
-                  <span
-                    className={`absolute bottom-0 left-0 h-1 rounded-full bg-amber-400 shadow-sm transition-all duration-300 ${isActive ? "w-full" : "w-0 hover:w-full"
+        {/* Desktop Navigation Links - Hidden on Checkout Route */}
+        {!isCheckout ? (
+          <nav className="hidden items-center gap-7 text-sm font-extrabold text-white lg:flex">
+            {categoryNavItems
+              ? categoryNavItems.map((item) => {
+                const isActive = activeNav === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => onNavClick && onNavClick(item.key)}
+                    className={`relative py-1 transition duration-200 flex items-center gap-1.5 font-extrabold tracking-wide ${isActive ? "text-amber-300 drop-shadow-xs" : "text-white hover:text-amber-200"
                       }`}
-                  />
-                </button>
-              );
-            })
-            : DEFAULT_NAV_LINKS.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="relative py-1 transition hover:text-amber-200 group flex items-center gap-1.5 font-extrabold tracking-wide text-white"
-              >
-                <span>{t(link.name)}</span>
-                <span className="absolute bottom-0 left-0 h-1 rounded-full w-0 bg-amber-400 shadow-sm transition-all duration-300 group-hover:w-full" />
-              </Link>
-            ))}
-        </nav>
+                  >
+                    <span>{item.name}</span>
+                    <span
+                      className={`absolute bottom-0 left-0 h-1 rounded-full bg-amber-400 shadow-sm transition-all duration-300 ${isActive ? "w-full" : "w-0 hover:w-full"
+                        }`}
+                    />
+                  </button>
+                );
+              })
+              : DEFAULT_NAV_LINKS.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="relative py-1 transition hover:text-amber-200 group flex items-center gap-1.5 font-extrabold tracking-wide text-white"
+                >
+                  <span>{t(link.name)}</span>
+                  <span className="absolute bottom-0 left-0 h-1 rounded-full w-0 bg-amber-400 shadow-sm transition-all duration-300 group-hover:w-full" />
+                </Link>
+              ))}
+          </nav>
+        ) : (
+          <div className="hidden lg:flex items-center gap-2">
+            <span className="text-xs font-bold text-amber-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+               Checkout Mode  
+            </span>
+          </div>
+        )}
 
-        {/* Action Controls matching template screenshot (Wishlist, Orders, Account, Cart) - Laptop/PC Desktop Only */}
+        {/* Action Controls matching template screenshot */}
         <div className="hidden lg:flex items-center gap-2 sm:gap-4 text-white">
 
           {/* 1. Wishlist Button */}
-          <button
-            onClick={openWishlist}
-            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
-            title="My Wishlist"
-          >
-            <div className="relative h-6 w-6 flex items-center justify-center">
-              <Icon name="Heart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
-                  {wishlistCount}
-                </span>
-              )}
-            </div>
-            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Wishlist</span>
-          </button>
+          {!isCheckout && (
+            <button
+              onClick={openWishlist}
+              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+              title="My Wishlist"
+            >
+              <div className="relative h-6 w-6 flex items-center justify-center">
+                <Icon name="Heart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+                    {wishlistCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Wishlist</span>
+            </button>
+          )}
 
           {/* 2. Orders Button */}
-          <button
-            onClick={() => {
-              if (user) {
-                router.push("/account?tab=orders");
-              } else {
-                router.push("/login?callbackUrl=/account?tab=orders");
-              }
-            }}
-            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer group px-1 py-0.5"
-            title="My Orders"
-          >
-            <div className="relative h-6 w-6 flex items-center justify-center">
-              <Icon name="Package" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
-            </div>
-            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Orders</span>
-          </button>
+          {!isCheckout && (
+            <button
+              onClick={() => {
+                if (user) {
+                  router.push("/account?tab=orders");
+                } else {
+                  router.push("/login?callbackUrl=/account?tab=orders");
+                }
+              }}
+              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer group px-1 py-0.5"
+              title="My Orders"
+            >
+              <div className="relative h-6 w-6 flex items-center justify-center">
+                <Icon name="Package" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+              </div>
+              <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Orders</span>
+            </button>
+          )}
 
-          {/* 3. Account Button (Perfectly Aligned Avatar / User Icon) */}
+          {/* 3. Account Button */}
           <button
             onClick={() => {
+              if (isCheckout && onReturnToCart) {
+                onReturnToCart();
+                return;
+              }
               if (user) {
                 router.push("/account");
               } else {
@@ -330,30 +360,42 @@ export function Header({
             </span>
           </button>
 
-          {/* 4. Cart Button */}
-          <button
-            onClick={openCart}
-            className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
-            aria-label="Shopping Cart"
-            title={`Shopping Cart (${productCount} Products)`}
-          >
-            <div className="relative h-6 w-6 flex items-center justify-center">
-              <Icon name="ShoppingCart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
-              <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
-                {displayCartCount}
-              </span>
-            </div>
-            <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Cart</span>
-          </button>
+          {/* 4. Cart Button or Return to Cart Link during Checkout */}
+          {isCheckout ? (
+            <button
+              type="button"
+              onClick={() => onReturnToCart ? onReturnToCart() : router.push("/cart")}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition cursor-pointer"
+              title="Return to Cart"
+            >
+              <Icon name="ArrowLeft" className="h-4 w-4 stroke-[2.5]" />
+              <span>Return to Cart</span>
+            </button>
+          ) : (
+            <button
+              onClick={openCart}
+              className="flex flex-col items-center justify-center min-w-[56px] text-white hover:text-amber-300 transition cursor-pointer relative group px-1 py-0.5"
+              aria-label="Shopping Cart"
+              title={`Shopping Cart (${productCount} Products)`}
+            >
+              <div className="relative h-6 w-6 flex items-center justify-center">
+                <Icon name="ShoppingCart" className="h-5.5 w-5.5 stroke-[2.4] group-hover:scale-110 transition-transform drop-shadow-xs" />
+                <span className="absolute -top-1.5 -right-2.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-slate-950 shadow-md border border-slate-900/30">
+                  {displayCartCount}
+                </span>
+              </div>
+              <span className="text-[11px] font-extrabold tracking-wide mt-1 text-white">Cart</span>
+            </button>
+          )}
         </div>
 
         {/* Mobile Top Right Utilities: Compact Language Switcher & Phone Support Button */}
         <div className="flex lg:hidden items-center gap-2 text-white">
           <LanguageSwitcher />
           <a
-            href="tel:+919974692496"
+            href="tel:+923184095736"
             className="grid h-7 w-7 place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition border border-white/20"
-            title="Call Support +919974692496"
+            title="Call Support +92 318 4095736"
           >
             <svg
               className="h-3.5 w-3.5 text-white fill-none stroke-current stroke-[2.2]"

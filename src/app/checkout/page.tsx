@@ -9,7 +9,7 @@ import { SiteFooter } from "@/components/common/Footer";
 import { Icon } from "@/components/common/Icons";
 import { useCartContext } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { StockReservationTimer } from "@/components/checkout/StockReservationTimer";
+import { StockReservationTimer, resetStockReservationStorage } from "@/components/checkout/StockReservationTimer";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -28,6 +28,17 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+
+  // Clean up stock reservation when user navigates away using browser Back/Forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      resetStockReservationStorage();
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Pre-fill user details if logged in
   useEffect(() => {
@@ -53,15 +64,53 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) return;
 
     setIsSubmitting(true);
-    
-    // Simulate order placement delay
-    setTimeout(() => {
-      const generatedOrderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
-      setOrderId(generatedOrderId);
-      setOrderComplete(true);
+    setOrderError(null);
+
+    try {
+      const payload = {
+        fullName,
+        email,
+        phone,
+        address,
+        city,
+        postalCode,
+        country,
+        paymentMethod,
+        items: cartItems,
+        subtotal,
+        estimatedTax,
+        shippingFee,
+        grandTotal,
+        userId: user?.email || null,
+      };
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success && data.orderId) {
+        setOrderId(data.orderId);
+        setOrderComplete(true);
+        resetStockReservationStorage();
+        clearCart();
+      } else {
+        setOrderError(data.error?.message || "Order creation failed on backend server. Please try again.");
+      }
+    } catch (err) {
+      console.error("Order processing error:", err);
+      setOrderError("Network connection error. Please verify your internet and try again.");
+    } finally {
       setIsSubmitting(false);
-      clearCart();
-    }, 1500);
+    }
+  };
+
+  const confirmReturnToCart = () => {
+    resetStockReservationStorage();
+    router.push("/cart");
   };
 
   if (isAuthLoading) {
@@ -77,7 +126,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-300">
-      <Header />
+      <Header onReturnToCart={() => setShowReturnModal(true)} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
         {/* Breadcrumb & Header */}
@@ -86,7 +135,13 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
               <Link href="/" className="hover:text-amber-400 transition">Storefront</Link>
               <span>/</span>
-              <Link href="/cart" className="hover:text-amber-400 transition">Cart</Link>
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(true)}
+                className="hover:text-amber-400 transition underline cursor-pointer"
+              >
+                Cart
+              </button>
               <span>/</span>
               <span className="text-slate-800 dark:text-slate-200">Checkout</span>
             </div>
@@ -95,6 +150,13 @@ export default function CheckoutPage() {
             </h1>
           </div>
         </div>
+
+        {orderError && (
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <Icon name="AlertCircle" className="h-5 w-5 shrink-0 text-rose-500" />
+            <span>{orderError}</span>
+          </div>
+        )}
 
         {orderComplete ? (
           /* Order Confirmation Screen */
@@ -412,6 +474,45 @@ export default function CheckoutPage() {
 
           </form>
         </div>
+        )}
+        {/* Return to Cart Confirmation Warning Modal */}
+        {showReturnModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in">
+            <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <Icon name="AlertTriangle" className="h-6 w-6 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    Leave Checkout?
+                  </h3>
+                  
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                Leaving checkout will release your inventory lock.  
+              </p>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReturnModal(false)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-extrabold hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                >
+                  Stay on Checkout
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmReturnToCart}
+                  className="flex-1 py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow transition cursor-pointer"
+                >
+                    Leave
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
 

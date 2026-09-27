@@ -4,7 +4,13 @@ import React, { useState, useEffect } from "react";
 import { Icon } from "@/components/common/Icons";
 
 const RESERVATION_DURATION_SECONDS = 15 * 60; // 15 minutes
-const STORAGE_KEY = "lumina_checkout_reservation_timestamp";
+export const STORAGE_KEY = "lumina_checkout_reservation_timestamp";
+
+export function resetStockReservationStorage() {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+}
 
 export function StockReservationTimer({ onItemCountChange }: { onItemCountChange?: () => void }) {
   const [timeLeft, setTimeLeft] = useState<number>(RESERVATION_DURATION_SECONDS);
@@ -82,11 +88,9 @@ export function StockReservationTimer({ onItemCountChange }: { onItemCountChange
         </div>
         <div>
           <span className="font-extrabold text-slate-900 dark:text-white">
-            ⚡ Inventory Reserved & Locked
+             Inventory Reserved & Locked
           </span>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Stock held exclusively for your active checkout session
-          </p>
+           
         </div>
       </div>
       <div className="flex items-center gap-1.5 font-mono font-black text-sm px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
