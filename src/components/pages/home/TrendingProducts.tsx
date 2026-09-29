@@ -109,7 +109,7 @@ export const FEATURED_TRENDING_ITEMS: ProductItem[] = [
     price: 28.99,
     originalPrice: 34.99,
     discountPercent: "17.1% off",
-    image: "https://images.unsplash.com/photo-1608248597266-c896505f6142?w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop",
     brand: "L'ORÉAL",
     rating: 4.9,
     description: "1.5% pure Hyaluronic Acid serum for intense skin hydration.",

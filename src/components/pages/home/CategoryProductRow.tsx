@@ -43,14 +43,6 @@ export function CategoryProductRow({
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${badgeColorClasses[badgeColor]}`}
-            >
-              <Icon name="Sparkles" className="h-3 w-3" />
-              {t(badge)}
-            </span>
-          </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {t(title)}

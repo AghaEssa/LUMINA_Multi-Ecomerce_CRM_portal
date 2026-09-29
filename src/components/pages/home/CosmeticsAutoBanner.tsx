@@ -23,7 +23,7 @@ const SLIDES = [
     title: "L'Oréal & High-End Women's Cosmetics Edit",
     subtitle: "Hyaluronic Acid hydration serums, silk foundation, & matte lipstick collections.",
     badge: "NEW EDIT",
-    image: "https://images.unsplash.com/photo-1608248597266-c896505f6142?w=1400&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=1400&auto=format&fit=crop",
     link: "/category/cosmetics",
     buttonText: "Explore Women's Beauty",
   },

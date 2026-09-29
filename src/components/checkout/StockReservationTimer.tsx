@@ -12,7 +12,13 @@ export function resetStockReservationStorage() {
   }
 }
 
-export function StockReservationTimer({ onItemCountChange }: { onItemCountChange?: () => void }) {
+export function StockReservationTimer({
+  onItemCountChange,
+  onExpire,
+}: {
+  onItemCountChange?: () => void;
+  onExpire?: () => void;
+}) {
   const [timeLeft, setTimeLeft] = useState<number>(RESERVATION_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState<boolean>(false);
 
@@ -35,6 +41,9 @@ export function StockReservationTimer({ onItemCountChange }: { onItemCountChange
 
       if (diff === 0) {
         setIsExpired(true);
+        if (onExpire) {
+          onExpire();
+        }
       }
     };
 
@@ -42,7 +51,7 @@ export function StockReservationTimer({ onItemCountChange }: { onItemCountChange
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onExpire]);
 
   const handleRefreshReservation = () => {
     const newTarget = Date.now() + RESERVATION_DURATION_SECONDS * 1000;
@@ -88,9 +97,8 @@ export function StockReservationTimer({ onItemCountChange }: { onItemCountChange
         </div>
         <div>
           <span className="font-extrabold text-slate-900 dark:text-white">
-             Inventory Reserved & Locked
+            Inventory Reserved &amp; Locked
           </span>
-           
         </div>
       </div>
       <div className="flex items-center gap-1.5 font-mono font-black text-sm px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">

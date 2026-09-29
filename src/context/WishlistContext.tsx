@@ -1,12 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductItem } from "@/lib/products";
+import { wishlistService } from "@/services/wishlistService";
 
 interface WishlistContextType {
   wishlistItems: ProductItem[];
   wishlistCount: number;
   isWishlistOpen: boolean;
+  isLoading: boolean;
   toggleWishlist: (product: ProductItem) => void;
   isInWishlist: (productId: string) => boolean;
   removeFromWishlist: (productId: string) => void;
@@ -17,32 +20,63 @@ interface WishlistContextType {
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = "lumina_wishlist_v1";
-
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const [wishlistItems, setWishlistItems] = useState<ProductItem[]>([]);
+  const queryClient = useQueryClient();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
-  // Load wishlist from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        setWishlistItems(JSON.parse(saved));
-      }
-    } catch {
-      setWishlistItems([]);
-    }
-  }, []);
+  // 1. Fetch Wishlist using TanStack Query
+  const { data: wishlistItems = [], isLoading } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: wishlistService.getWishlist,
+  });
 
-  // Save wishlist to localStorage on update
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(wishlistItems));
-    } catch {
-      // Ignore write errors
+  // 2. Optimistic Update Mutation for Toggle
+  const toggleMutation = useMutation({
+    mutationFn: wishlistService.toggleWishlist,
+    onMutate: async (product) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["wishlist"] });
+
+      // Snapshot the previous value
+      const previousWishlist = queryClient.getQueryData<ProductItem[]>(["wishlist"]) || [];
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<ProductItem[]>(["wishlist"], (old = []) => {
+        const exists = old.some((item) => item.slug === product.slug);
+        if (exists) {
+          return old.filter((item) => item.slug !== product.slug);
+        } else {
+          return [...old, product];
+        }
+      });
+
+      return { previousWishlist };
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, newTodo, context) => {
+      if (context?.previousWishlist) {
+        queryClient.setQueryData(["wishlist"], context.previousWishlist);
+      }
+    },
+    // Always refetch after error or success:
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: wishlistService.removeFromWishlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     }
-  }, [wishlistItems]);
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: wishlistService.clearWishlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    }
+  });
 
   const isInWishlist = useCallback(
     (productSlug: string) => {
@@ -52,24 +86,16 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   );
 
   const toggleWishlist = useCallback((product: ProductItem) => {
-    setWishlistItems((prev) => {
-      const exists = prev.some((item) => item.slug === product.slug);
-      if (exists) {
-        return prev.filter((item) => item.slug !== product.slug);
-      } else {
-        return [...prev, product];
-      }
-    });
-  }, []);
+    toggleMutation.mutate(product);
+  }, [toggleMutation]);
 
   const removeFromWishlist = useCallback((productSlug: string) => {
-    setWishlistItems((prev) => prev.filter((item) => item.slug !== productSlug));
-  }, []);
-
+    removeMutation.mutate(productSlug);
+  }, [removeMutation]);
 
   const clearWishlist = useCallback(() => {
-    setWishlistItems([]);
-  }, []);
+    clearMutation.mutate();
+  }, [clearMutation]);
 
   const openWishlist = useCallback(() => setIsWishlistOpen(true), []);
   const closeWishlist = useCallback(() => setIsWishlistOpen(false), []);
@@ -80,6 +106,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         wishlistItems,
         wishlistCount: wishlistItems.length,
         isWishlistOpen,
+        isLoading,
         toggleWishlist,
         isInWishlist,
         removeFromWishlist,

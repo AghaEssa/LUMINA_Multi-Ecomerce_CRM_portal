@@ -15,6 +15,7 @@ import { Security2FAModal } from "@/components/common/Security2FAModal";
 import { MobileBottomNav } from "@/components/common/MobileBottomNav";
 import { FloatingActionButtons } from "@/components/common/FloatingActionButtons";
 import { OfflineGuard } from "@/components/common/OfflineGuard";
+import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -129,26 +130,28 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className={`${poppins.variable} ${inter.variable} font-sans min-h-screen bg-[#f8fafc] dark:bg-[#060b13] text-slate-900 dark:text-slate-100 antialiased overflow-x-clip`}>
         <div id="google_translate_element" />
-        <LanguageProvider>
-          <AuthProvider>
-            <WishlistProvider>
-              <CartProvider>
-                <OfflineGuard>
-                  <div className="pb-16 md:pb-0">
-                    {children}
-                  </div>
-                </OfflineGuard>
-                <MobileBottomNav />
-                <FloatingActionButtons />
-                <CartToast />
-                <CartDrawer />
-                <WishlistDrawer />
-                <ProfileModal />
-                <Security2FAModal />
-              </CartProvider>
-            </WishlistProvider>
-          </AuthProvider>
-        </LanguageProvider>
+        <ReactQueryProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <WishlistProvider>
+                <CartProvider>
+                  <OfflineGuard>
+                    <div className="pb-16 md:pb-0">
+                      {children}
+                    </div>
+                  </OfflineGuard>
+                  <MobileBottomNav />
+                  <FloatingActionButtons />
+                  <CartToast />
+                  <CartDrawer />
+                  <WishlistDrawer />
+                  <ProfileModal />
+                  <Security2FAModal />
+                </CartProvider>
+              </WishlistProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

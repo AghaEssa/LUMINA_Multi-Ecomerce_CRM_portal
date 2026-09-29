@@ -11,12 +11,16 @@ export type ProductItem = {
   originalPrice?: number;
   discountPercent?: string;
   image: string;
+  secondaryImage?: string;
   brand: string;
   rating: number;
   description?: string;
   inStock?: boolean;
   badge?: string;
   tags?: string[];
+  sizes?: string[];
+  colors?: { name: string; hex: string }[];
+  createdAt?: string;
 };
 
 export const DEFAULT_PRODUCTS: ProductItem[] = [
@@ -547,7 +551,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     price: 28.99,
     originalPrice: 34.99,
     discountPercent: "17.1% OFF",
-    image: "https://images.unsplash.com/photo-1608248597266-c896505f6142?w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop",
     brand: "L'ORÉAL",
     rating: 4.9,
     description: "1.5% pure Hyaluronic Acid serum for intense skin hydration and wrinkle reduction.",
@@ -768,12 +772,15 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
           originalPrice: prod.originalPrice ? Number(prod.originalPrice) : Math.round(Number(prod.price) * 1.18 * 100) / 100,
           discountPercent: prod.discountPercent ? String(prod.discountPercent) : "15% OFF",
           image,
+          secondaryImage: prod.secondaryImage ? String(prod.secondaryImage) : undefined,
           brand: String(prod.brand),
           rating: Number(prod.rating),
           description: prod.description ? String(prod.description) : "",
           inStock: prod.inStock !== undefined ? Boolean(prod.inStock) : true,
           badge: prod.badge ? String(prod.badge) : "",
           tags: prod.tags ? (prod.tags as string[]) : ["popular", "in-stock"],
+          sizes: prod.sizes ? (prod.sizes as string[]) : ["S", "M", "L", "XL"],
+          colors: prod.colors ? prod.colors : [{ name: "Black", hex: "#0f172a" }, { name: "Navy", hex: "#1e3a8a" }],
         };
       });
     }

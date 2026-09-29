@@ -122,7 +122,7 @@ export function LanguageSwitcher({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 rounded-2xl bg-white dark:bg-slate-900 py-1.5 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 mt-2 w-44 rounded-2xl bg-white dark:bg-slate-900 py-1.5 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800">
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Language / भाषा

@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import { SiteHeader } from "@/components/common/Header";
 import { FilterSidebar, type FilterState } from "@/components/pages/category/FilterSidebar";
 import { ProductCard } from "@/components/common/ProductCard";
 import { SearchModal } from "@/components/common/SearchModal";
-import { ProductDetailsModal } from "@/components/common/ProductDetailsModal";
+import { Breadcrumbs } from "@/components/common/Breadcrumbs";
 import { SiteFooter } from "@/components/common/Footer";
 import { Icon } from "@/components/common/Icons";
 import type { CategoryItem } from "@/lib/categories";
@@ -89,15 +88,18 @@ export function CategoryPortalPage({
   const [sortOption, setSortOption] = useState<SortOption>("featured");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState<"storefront" | "sections" | "trending" | "brands">("storefront");
-  const [selectedProductModal, setSelectedProductModal] = useState<ProductItem | null>(null);
   const [viewMode, setViewMode] = useState<"grid2" | "scroll" | "grid1">("grid2");
   const [heroImageIdx, setHeroImageIdx] = useState(0);
+
+  // Pagination "Load More" state
+  const [visibleCount, setVisibleCount] = useState<number>(12);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
   const categorySlides = useMemo(() => {
     const slug = category.slug.toLowerCase();
     if (CATEGORY_SLIDES[slug]) return CATEGORY_SLIDES[slug];
     if (category.heroImage || category.image) {
-      return [category.heroImage || category.image];
+      return [category.heroImage || category.image!];
     }
     return ["https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop"];
   }, [category]);
@@ -139,6 +141,8 @@ export function CategoryPortalPage({
       minPrice: 0,
       maxPrice: maxAvailablePrice,
       selectedBrands: [],
+      selectedColors: [],
+      selectedSizes: [],
       minRating: 0,
       inStockOnly: false,
     }),
@@ -147,26 +151,10 @@ export function CategoryPortalPage({
 
   const [filters, setFilters] = useState<FilterState>(initialFilterState);
 
-  // Handle Top Category Navbar Link Clicks
-  const handleNavClick = (key: "storefront" | "sections" | "trending" | "brands") => {
-    setActiveNavTab(key);
-    if (key === "storefront") {
-      setActiveSubCategory("All");
-      setSearchQuery("");
-      const hero = document.getElementById("category-hero");
-      if (hero) hero.scrollIntoView({ behavior: "smooth" });
-    } else if (key === "sections") {
-      const sections = document.getElementById("sections-bar");
-      if (sections) sections.scrollIntoView({ behavior: "smooth" });
-    } else if (key === "trending") {
-      const grid = document.getElementById("catalog-grid");
-      if (grid) grid.scrollIntoView({ behavior: "smooth" });
-    } else if (key === "brands") {
-      setMobileFilterOpen(true);
-      const sidebar = document.getElementById("filter-sidebar");
-      if (sidebar) sidebar.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  // Reset pagination when filters, subcategories, or search change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [filters, activeSubCategory, searchQuery, sortOption, activeNavTab]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -176,7 +164,10 @@ export function CategoryPortalPage({
     if (filters.minPrice > 0) count++;
     if (filters.maxPrice < maxAvailablePrice) count++;
     if (filters.selectedBrands.length > 0) count += filters.selectedBrands.length;
+    if (filters.selectedColors?.length > 0) count += filters.selectedColors.length;
+    if (filters.selectedSizes?.length > 0) count += filters.selectedSizes.length;
     if (filters.minRating > 0) count++;
+    if (filters.inStockOnly) count++;
     if (searchQuery.trim()) count++;
     return count;
   }, [filters, maxAvailablePrice, activeSubCategory, searchQuery, activeNavTab]);
@@ -187,6 +178,8 @@ export function CategoryPortalPage({
       minPrice: 0,
       maxPrice: maxAvailablePrice,
       selectedBrands: [],
+      selectedColors: [],
+      selectedSizes: [],
       minRating: 0,
       inStockOnly: false,
     });
@@ -199,7 +192,7 @@ export function CategoryPortalPage({
   const filteredProducts = useMemo(() => {
     return products
       .filter((prod) => {
-        // Nav tab Trending Filter (when "Trending" is selected in top navbar)
+        // Nav tab Trending Filter
         if (activeNavTab === "trending") {
           const b = prod.badge?.toLowerCase() || "";
           const isTrending =
@@ -227,6 +220,34 @@ export function CategoryPortalPage({
         if (filters.selectedBrands.length > 0 && !filters.selectedBrands.includes(prod.brand)) {
           return false;
         }
+
+        // Color Filter
+        if (filters.selectedColors && filters.selectedColors.length > 0) {
+          const prodColors = (prod.colors || []).map((c) => c.name.toLowerCase());
+          const prodTags = (prod.tags || []).map((t) => t.toLowerCase());
+          const prodTitle = prod.title.toLowerCase();
+          const matchesColor = filters.selectedColors.some((sc) => {
+            const scLower = sc.toLowerCase();
+            return (
+              prodColors.includes(scLower) ||
+              prodTags.includes(scLower) ||
+              prodTitle.includes(scLower)
+            );
+          });
+          if (!matchesColor) return false;
+        }
+
+        // Size Filter
+        if (filters.selectedSizes && filters.selectedSizes.length > 0) {
+          const prodSizes = (prod.sizes || ["S", "M", "L", "XL"]).map((s) => s.toUpperCase());
+          const prodTags = (prod.tags || []).map((t) => t.toUpperCase());
+          const matchesSize = filters.selectedSizes.some((ss) => {
+            const ssUpper = ss.toUpperCase();
+            return prodSizes.includes(ssUpper) || prodTags.includes(ssUpper);
+          });
+          if (!matchesSize) return false;
+        }
+
         // Rating Filter
         if (filters.minRating > 0 && prod.rating < filters.minRating) return false;
         // In Stock Filter
@@ -250,10 +271,43 @@ export function CategoryPortalPage({
       });
   }, [products, filters, activeSubCategory, searchQuery, sortOption, activeNavTab]);
 
+  // Displayed products based on "Load More" pagination
+  const displayedProducts = useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
+
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + 12);
+      setIsLoadingMore(false);
+    }, 400);
+  };
+
+  const handleNavClick = (key: "storefront" | "sections" | "trending" | "brands") => {
+    setActiveNavTab(key);
+    if (key === "storefront") {
+      setActiveSubCategory("All");
+      setSearchQuery("");
+      const hero = document.getElementById("category-hero");
+      if (hero) hero.scrollIntoView({ behavior: "smooth" });
+    } else if (key === "sections") {
+      const sections = document.getElementById("sections-bar");
+      if (sections) sections.scrollIntoView({ behavior: "smooth" });
+    } else if (key === "trending") {
+      const grid = document.getElementById("catalog-grid");
+      if (grid) grid.scrollIntoView({ behavior: "smooth" });
+    } else if (key === "brands") {
+      setMobileFilterOpen(true);
+      const sidebar = document.getElementById("filter-sidebar");
+      if (sidebar) sidebar.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
       
-      {/* Dynamic Header for Category Page */}
+      {/* Site Header */}
       <SiteHeader
         cartCount={cartCount}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -262,14 +316,26 @@ export function CategoryPortalPage({
         onNavClick={handleNavClick}
       />
 
-      {/* Category Hero Header Banner */}
+      {/* Dynamic Category Banner with Breadcrumbs inside top left */}
       <section
         id="category-hero"
-        className="relative overflow-hidden bg-gradient-to-br from-[#0369a1] via-[#0284c7] to-[#0ea5e9] dark:from-[#082f49] dark:via-[#0c4a6e] dark:to-[#0f172a] text-white py-10 lg:py-14 shadow-xl border-b dark:border-slate-800"
+        className="relative overflow-hidden bg-gradient-to-br from-[#0369a1] via-[#0284c7] to-[#0ea5e9] dark:from-[#082f49] dark:via-[#0c4a6e] dark:to-[#0f172a] text-white py-8 lg:py-12 shadow-xl border-b dark:border-slate-800"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-400/20 via-transparent to-transparent pointer-events-none" />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+          
+          {/* Breadcrumb Trail positioned inside top left of Hero Banner */}
+          <div>
+            <Breadcrumbs
+              variant="hero"
+              items={[
+                { label: "Categories", href: "/categories" },
+                { label: category.name },
+              ]}
+            />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Left Column: Headline & Details */}
@@ -278,41 +344,41 @@ export function CategoryPortalPage({
                 <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 text-amber-300 shadow-xl backdrop-blur-md ring-2 ring-white/20">
                   <Icon name={category.icon} className="h-6 w-6" />
                 </div>
-                <span className="rounded-full bg-amber-400 text-ocean-950 font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-sm">
-                  {activeNavTab === "trending" ? ` ${category.name} Trending` : category.badge || "Curated Collection"}
+                <span className="rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-sm">
+                  {activeNavTab === "trending" ? `${category.name} Trending` : category.badge || "Curated Store"}
                 </span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-                LUMINA <span className="text-amber-300">{category.name}</span> Store
+                LUMINA <span className="text-amber-300">{category.name}</span> Collection
               </h1>
 
-              <p className="text-sm sm:text-base text-ocean-100/90 leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base text-sky-100/90 leading-relaxed max-w-2xl">
                 {activeNavTab === "trending"
-                  ? `Showing all top-rated, best-selling and trending products in the ${category.name} collection.`
-                  : category.bannerTagline || category.description || `Explore our dedicated ${category.name} storefront collection.`}
+                  ? `Discover top-rated, best-selling and trending products in the ${category.name} catalog.`
+                  : category.bannerTagline || category.description || `Explore our flagship ${category.name} collection.`}
               </p>
 
               {/* Micro Features Strip */}
-              <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-bold text-ocean-200">
-                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+              <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-bold text-sky-100">
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
                   <Icon name="Check" className="h-4 w-4 text-emerald-400" /> 100% Authentic
                 </span>
-                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
                   <Icon name="Check" className="h-4 w-4 text-emerald-400" /> Express 24h Dispatch
                 </span>
-                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
                   <Icon name="Check" className="h-4 w-4 text-emerald-400" /> 30-Day Easy Returns
                 </span>
               </div>
             </div>
 
-            {/* Right Column: Premium Layered 3D Showcase */}
+            {/* Right Column: Layered Showcase Banner */}
             <div className="lg:col-span-5 relative group flex justify-center lg:justify-end">
-              <div className="absolute -inset-4 rounded-full bg-amber-400/25 blur-3xl opacity-70 " />
+              <div className="absolute -inset-4 rounded-full bg-amber-400/25 blur-3xl opacity-70" />
 
-              <div className="relative w-full max-w-md lg:max-w-none overflow-hidden rounded-3xl border-2 border-white/30 bg-ocean-950/60 shadow-2xl shadow-black/50">
-                <div className="relative aspect-[4/4] w-full overflow-hidden">
+              <div className="relative w-full max-w-md lg:max-w-none overflow-hidden rounded-3xl border-2 border-white/30 bg-slate-950/60 shadow-2xl shadow-black/50">
+                <div className="relative aspect-[4/3] sm:aspect-[4/4] w-full overflow-hidden">
                   {categorySlides.map((imgSrc, idx) => {
                     const isActive = idx === heroImageIdx;
                     return (
@@ -323,8 +389,8 @@ export function CategoryPortalPage({
                         }`}
                       >
                         <NextImage
-                          src={imgSrc || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop"}
-                          alt={`${category.name} Flagship Showcase ${idx + 1}`}
+                          src={imgSrc}
+                          alt={`${category.name} Banner ${idx + 1}`}
                           fill
                           priority={idx === 0}
                           className="object-cover transition-transform duration-700 group-hover:scale-108"
@@ -334,17 +400,20 @@ export function CategoryPortalPage({
                     );
                   })}
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#042d3c] via-slate-950/30 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#0284c7]/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
 
                   <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
-                    <span className="rounded-full bg-slate-950/70 backdrop-blur-md text-amber-300 font-bold text-[10px] uppercase tracking-wider px-3 py-1 border border-white/20 shadow-md">
+                    <span className="rounded-full bg-slate-950/80 backdrop-blur-md text-amber-300 font-bold text-[10px] uppercase tracking-wider px-3 py-1 border border-white/20 shadow-md">
                       UP TO 40% OFF
                     </span>
                   </div>
 
-                  
-
+                  <div className="absolute bottom-4 left-4 right-4 z-10 flex items-center justify-between text-xs text-white font-bold bg-slate-950/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                    <span>{category.name} Inventory</span>
+                    <span className="text-amber-400 font-black">
+                      {category.itemCount ? `${category.itemCount.toLocaleString()} items` : `${products.length} Items`}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -383,58 +452,72 @@ export function CategoryPortalPage({
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Main Catalog Content */}
       <main className="flex-grow py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
-          {/* Top Control Bar */}
+          {/* Header Row Above Grid: Inventory Count & Search Bar */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-            <div className="relative flex-grow max-w-md">
-              <Icon name="Search" className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search within ${category.name} store...`}
-                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <Icon name="X" className="h-3.5 w-3.5" />
-                </button>
-              )}
+            
+            {/* Inventory Item Count Display strictly above grid */}
+            <div className="flex flex-col">
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                Showing 1–{displayedProducts.length} of {filteredProducts.length} items
+              </span>
+              <span className="text-[11px] font-semibold text-slate-400">
+                {category.itemCount ? `Total ${category.itemCount.toLocaleString()} items in ${category.name}` : `Catalog results`}
+              </span>
             </div>
 
+            {/* Controls Right */}
             <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 flex-wrap">
-              {/* Mobile View Toggle Buttons */}
+              {/* Search input */}
+              <div className="relative max-w-xs w-full sm:w-64">
+                <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search ${category.name}...`}
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-9 pr-8 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <Icon name="X" className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* View Toggle */}
               <div className="flex items-center rounded-2xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200 dark:border-slate-700">
                 <button
                   onClick={() => setViewMode("grid2")}
-                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition flex items-center gap-1 ${
+                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition ${
                     viewMode === "grid2"
                       ? "bg-white dark:bg-slate-900 text-[#0284c7] dark:text-amber-400 shadow-sm"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
                   }`}
-                  title="2-Column Grid (Compact View)"
+                  title="Grid View"
                 >
-                  <span> Grid</span>
+                  Grid
                 </button>
                 <button
                   onClick={() => setViewMode("scroll")}
-                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition flex items-center gap-1 ${
+                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition ${
                     viewMode === "scroll"
                       ? "bg-white dark:bg-slate-900 text-[#0284c7] dark:text-amber-400 shadow-sm"
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
                   }`}
-                  title="Horizontal Scrollable Row"
+                  title="Swipe View"
                 >
-                  <span>Swipe</span>
+                  Swipe
                 </button>
               </div>
 
+              {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setMobileFilterOpen((prev) => !prev)}
                 className="lg:hidden flex items-center gap-2 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-2 text-xs font-bold shadow transition cursor-pointer"
@@ -443,33 +526,35 @@ export function CategoryPortalPage({
                 <span>Filter ({activeFilterCount})</span>
               </button>
 
-              <div className="flex items-center gap-2">
+              {/* Sort Dropdown Strictly Top Right */}
+              <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-slate-400 hidden sm:inline">Sort:</span>
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as SortOption)}
                   className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
                 >
-                  <option value="featured">Featured Selection</option>
+                  <option value="featured">Newest Selection</option>
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
+                  <option value="rating">Best Sellers</option>
                 </select>
               </div>
+
             </div>
 
           </div>
 
           {/* Active Filter Badges */}
           {activeFilterCount > 0 && (
-            <div className="mb-6 flex flex-wrap items-center gap-2 bg-slate-100/80 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="mb-6 flex flex-wrap items-center gap-2 bg-slate-100/80 dark:bg-slate-900/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 Active Selection ({filteredProducts.length} items):
               </span>
 
               {activeNavTab === "trending" && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-slate-950 px-3 py-1 text-xs font-black">
-                  Mode: {category.name} Trending
+                  Mode: Trending
                   <button onClick={() => setActiveNavTab("storefront")}>
                     <Icon name="X" className="h-3.5 w-3.5" />
                   </button>
@@ -494,6 +579,44 @@ export function CategoryPortalPage({
                 </span>
               )}
 
+              {filters.selectedColors?.map((col) => (
+                <span
+                  key={col}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                >
+                  Color: {col}
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        ...filters,
+                        selectedColors: filters.selectedColors.filter((c) => c !== col),
+                      })
+                    }
+                  >
+                    <Icon name="X" className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))}
+
+              {filters.selectedSizes?.map((sz) => (
+                <span
+                  key={sz}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                >
+                  Size: {sz}
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        ...filters,
+                        selectedSizes: filters.selectedSizes.filter((s) => s !== sz),
+                      })
+                    }
+                  >
+                    <Icon name="X" className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))}
+
               {filters.selectedBrands.map((brand) => (
                 <span
                   key={brand}
@@ -513,27 +636,20 @@ export function CategoryPortalPage({
                 </span>
               ))}
 
-              {filters.minRating > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 dark:bg-sky-950 px-3 py-1 text-xs font-bold text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800">
-                  {filters.minRating}+ Stars
-                  <button onClick={() => setFilters({ ...filters, minRating: 0 })}>
-                    <Icon name="X" className="h-3.5 w-3.5" />
-                  </button>
-                </span>
-              )}
-
               <button
                 onClick={handleResetFilters}
-                className="text-xs font-bold text-rose-500 hover:underline ml-2"
+                className="text-xs font-bold text-rose-500 hover:underline ml-2 cursor-pointer"
               >
                 Clear all filters
               </button>
             </div>
           )}
 
-          {/* Desktop & Mobile Product Grid */}
+          {/* Desktop & Mobile Catalog Grid */}
           <div id="catalog-grid" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div id="filter-sidebar" className="hidden lg:block lg:col-span-3 sticky top-14 z-20">
+            
+            {/* Sticky Desktop Filter Sidebar */}
+            <div id="filter-sidebar" className="hidden lg:block lg:col-span-3 sticky top-16 z-20">
               <FilterSidebar
                 allBrands={allBrands}
                 filters={filters}
@@ -544,6 +660,7 @@ export function CategoryPortalPage({
               />
             </div>
 
+            {/* Mobile Filter Drawer */}
             {mobileFilterOpen && (
               <div className="lg:hidden mb-6">
                 <FilterSidebar
@@ -557,33 +674,33 @@ export function CategoryPortalPage({
               </div>
             )}
 
-            <div className="lg:col-span-9">
-              {filteredProducts.length > 0 ? (
+            {/* Main Products Grid */}
+            <div className="lg:col-span-9 space-y-8">
+              {displayedProducts.length > 0 ? (
                 viewMode === "scroll" ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between px-1">
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                        Horizontal browse ({filteredProducts.length} items):
+                        Horizontal browse ({displayedProducts.length} items):
                       </span>
                       <span className="text-[10px] font-extrabold text-amber-500 animate-pulse">
                         ← Swipe Left/Right →
                       </span>
                     </div>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar py-2 px-1 snap-x snap-mandatory scroll-smooth">
-                      {filteredProducts.map((prod) => (
+                      {displayedProducts.map((prod) => (
                         <div key={prod.slug} className="w-[170px] sm:w-[220px] shrink-0 snap-start">
                           <ProductCard
                             product={prod}
                             onAddToCart={() => addToCart(1)}
-                             
                           />
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-6">
-                    {filteredProducts.map((prod) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
+                    {displayedProducts.map((prod) => (
                       <ProductCard
                         key={prod.slug}
                         product={prod}
@@ -601,16 +718,70 @@ export function CategoryPortalPage({
                     No products match your active selection
                   </h3>
                   <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                    Try selecting a different section or resetting filters.
+                    Try selecting a different category section or clearing active filters.
                   </p>
                   <button
                     onClick={handleResetFilters}
-                    className="mt-5 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-6 py-2.5 text-xs font-bold shadow transition"
+                    className="mt-5 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-6 py-2.5 text-xs font-bold shadow transition cursor-pointer"
                   >
-                    Reset All Selection & Filters
+                    Reset All Filters
                   </button>
                 </div>
               )}
+
+              {/* Skeleton Loading State during Load More */}
+              {isLoadingMore && (
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 space-y-3 animate-pulse"
+                    >
+                      <div className="aspect-[3/4] w-full rounded-xl sm:rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-8 w-full rounded-xl bg-slate-200 dark:bg-slate-800" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* "Load More" Continuous Shopping Flow Button */}
+              {visibleCount < filteredProducts.length && (
+                <div className="pt-6 flex flex-col items-center justify-center space-y-3 border-t border-slate-200 dark:border-slate-800">
+                  <div className="w-full max-w-md space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      <span>Showing {displayedProducts.length} of {filteredProducts.length} products</span>
+                      <span>{Math.round((displayedProducts.length / filteredProducts.length) * 100)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#0284c7] transition-all duration-300"
+                        style={{ width: `${(displayedProducts.length / filteredProducts.length) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    className="flex items-center gap-2 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white px-8 py-3.5 text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <Icon name="RefreshCw" className="h-4 w-4 animate-spin text-white" />
+                        <span>Loading Products...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="ChevronDown" className="h-4 w-4 text-white" />
+                        <span>Load More Products ({filteredProducts.length - visibleCount} remaining)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -636,7 +807,7 @@ export function CategoryPortalPage({
         }}
       />
 
-      {/* Footer */}
+      {/* Site Footer */}
       <SiteFooter />
     </div>
   );

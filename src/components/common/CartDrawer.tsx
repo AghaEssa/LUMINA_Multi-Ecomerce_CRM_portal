@@ -193,6 +193,35 @@ export function CartDrawer() {
             </div>
           </div>
 
+          {/* Promotional Free Shipping Dynamic Progress Bar */}
+          {cartItems.length > 0 && (() => {
+            const threshold = 150;
+            const remaining = Math.max(0, threshold - subtotal);
+            const percent = Math.min(100, (subtotal / threshold) * 100);
+            const unlocked = remaining === 0;
+
+            return (
+              <div className="bg-gradient-to-r from-sky-500/10 via-amber-500/10 to-emerald-500/10 dark:from-sky-950/40 dark:to-emerald-950/40 border-b border-slate-200/80 dark:border-slate-800 px-5 py-3 space-y-1.5 shrink-0">
+                <div className="flex items-center justify-between text-xs font-black">
+                  <span className={unlocked ? "text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5" : "text-slate-800 dark:text-slate-200 flex items-center gap-1.5"}>
+                    
+                    <span>{unlocked ? "You unlocked FREE Express Shipping!" : `Add $${remaining.toFixed(2)} more for FREE Shipping`}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold">{Math.round(percent)}%</span>
+                </div>
+
+                <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      unlocked ? "bg-emerald-500" : "bg-gradient-to-r from-[#0284c7] to-[#f59e0b]"
+                    }`}
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Cart Scrollable Content with Masonry Categorized Container Cards */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             {cartItems.length === 0 ? (

@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { SiteFooter } from "@/components/common/Footer";
 import { Icon } from "@/components/common/Icons";
+import { ProductCard } from "@/components/common/ProductCard";
+import { DEFAULT_PRODUCTS, type ProductItem } from "@/lib/products";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCartContext } from "@/context/CartContext";
@@ -28,6 +30,19 @@ type AccountTab =
   | "security"
   | "theme";
 
+type SidebarItem = {
+  id: AccountTab;
+  label: string;
+  icon: any;
+  count?: number;
+  activeBadge?: boolean;
+};
+
+type SidebarCluster = {
+  title: string;
+  items: SidebarItem[];
+};
+
 function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,6 +55,22 @@ function AccountContent() {
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
+  // Dynamic Filtering State
+  const [orderDateFilter, setOrderDateFilter] = useState<string>("all");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+
+  // Sensitive Data Masking Toggle
+  const [showSensitiveDetails, setShowSensitiveDetails] = useState<boolean>(false);
+
+  // Tab Switching Skeleton State
+  const [isTabSwitching, setIsTabSwitching] = useState<boolean>(false);
+
+  const handleTabChange = (tab: AccountTab) => {
+    setIsTabSwitching(true);
+    setActiveTab(tab);
+    setTimeout(() => setIsTabSwitching(false), 250);
+  };
 
   const toggleOrderExpand = (orderId: string) => {
     setExpandedOrders((prev) => ({
@@ -94,6 +125,75 @@ function AccountContent() {
     "Ergonomic Office Chair",
   ]);
   const [newItemInput, setNewItemInput] = useState("");
+
+  // Instant Client-Side Filtered Orders
+  const filteredOrders = useMemo(() => {
+    return userOrders.filter((ord) => {
+      if (orderStatusFilter !== "all" && ord.status?.toLowerCase() !== orderStatusFilter.toLowerCase()) {
+        return false;
+      }
+      if (orderDateFilter === "30days") {
+        const past = new Date();
+        past.setDate(past.getDate() - 30);
+        return new Date(ord.createdAt) >= past;
+      }
+      if (orderDateFilter === "2026") {
+        return new Date(ord.createdAt).getFullYear() === 2026;
+      }
+      return true;
+    });
+  }, [userOrders, orderDateFilter, orderStatusFilter]);
+
+  const sidebarClusters: SidebarCluster[] = [
+    {
+      title: "Shopping",
+      items: [
+        { id: "account" as AccountTab, label: "My Account Overview", icon: "User" as const },
+        { id: "orders" as AccountTab, label: "My Orders", icon: "Package" as const, activeBadge: true },
+        { id: "wishlist" as AccountTab, label: "My Wishlists", icon: "Heart" as const, count: wishlistCount },
+        { id: "shopping-list" as AccountTab, label: "Shopping List", icon: "List" as const, count: shoppingList.length },
+      ],
+    },
+    {
+      title: "Wallet & Financials",
+      items: [
+        { id: "wallet" as AccountTab, label: "Wallet Balance", icon: "Wallet" as const },
+        { id: "transactions" as AccountTab, label: "Transactions", icon: "CreditCard" as const },
+        { id: "refer" as AccountTab, label: "Refer & Earn", icon: "Gift" as const },
+      ],
+    },
+    {
+      title: "Settings & Support",
+      items: [
+        { id: "security" as AccountTab, label: "2FA Security", icon: "ShieldCheck" as const },
+        { id: "notifications" as AccountTab, label: "Notifications", icon: "Bell" as const },
+        { id: "theme" as AccountTab, label: "Theme Mode", icon: "Moon" as const },
+        { id: "support" as AccountTab, label: "Customer Support", icon: "HelpCircle" as const },
+      ],
+    },
+  ];
+
+  useEffect(() => {
+    if (user?.email) {
+      setIsLoadingOrders(true);
+      fetch(`/api/orders?email=${encodeURIComponent(user.email)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.orders)) {
+            setUserOrders(data.orders);
+          }
+        })
+        .catch((err) => console.error("Error fetching orders:", err))
+        .finally(() => setIsLoadingOrders(false));
+    }
+  }, [user?.email, activeTab]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab") as AccountTab;
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -171,34 +271,56 @@ function AccountContent() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
         
-        {/* 1. User Banner Header Card (Compact & Sleek) */}
-        <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-2xs flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-[#fef3c7] dark:bg-amber-400/20 border-2 border-[#f59e0b] text-[#d97706] dark:text-amber-400 font-extrabold text-base sm:text-lg flex items-center justify-center shadow-2xs shrink-0">
+        {/* 1. User Banner Header Card (Sleek Profile Header with Quick Actions) */}
+        <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 dark:from-amber-400/20 dark:to-amber-600/30 border-2 border-[#f59e0b] text-[#d97706] dark:text-amber-400 font-extrabold text-base sm:text-lg flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
               {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
-                {user.name || user.email.split("@")[0]}
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
+                  {user.name || user.email.split("@")[0]}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase">
+                  Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{user.email}</p>
             </div>
           </div>
- 
+
+          {/* Quick Actions Header Buttons (Edit Profile + Direct Log Out) */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={openProfileModal}
+              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
+            >
+              <Icon name="User" className="h-3.5 w-3.5 text-slate-500" />
+              <span>Edit Profile</span>
+            </button>
+            <button
+              onClick={logout}
+              className="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-rose-200 dark:border-rose-900"
+            >
+              <Icon name="LogOut" className="h-3.5 w-3.5 text-rose-500" />
+              <span>Log Out</span>
+            </button>
+          </div>
         </div>
 
-        {/* 2. Horizontal Tab Navigation Slider (Only for mobile view) */}
-        <div className="lg:hidden overflow-x-auto pb-1 -mx-2 px-2 flex items-center gap-2 no-scrollbar">
-          {sidebarLinks.map((link) => {
+        {/* 2. Horizontal Swipeable Tab Navigation Slider (Mobile View) */}
+        <div className="lg:hidden overflow-x-auto pb-1.5 -mx-2 px-2 flex items-center gap-2 no-scrollbar">
+          {sidebarClusters.flatMap((c) => c.items).map((link) => {
             const active = activeTab === link.id;
             return (
               <button
                 key={link.id}
-                onClick={() => setActiveTab(link.id)}
+                onClick={() => handleTabChange(link.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer flex items-center gap-2 ${
                   active
-                    ? "bg-[#fffbeb] dark:bg-amber-400/20 text-[#d97706] dark:text-amber-400 border border-[#fde68a] dark:border-amber-400/40 shadow-2xs"
+                    ? "bg-[#fffbeb] dark:bg-amber-400/20 text-[#d97706] dark:text-amber-400 border border-[#fde68a] dark:border-amber-400/40 shadow-xs"
                     : "bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -209,7 +331,7 @@ function AccountContent() {
           })}
         </div>
 
-        {/* 3. Breadcrumb Navigation (Placed below horizontal nav slider as requested) */}
+        {/* 3. Breadcrumb Navigation */}
         <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
             <Link href="/" className="hover:text-amber-500 transition flex items-center gap-1">
@@ -218,7 +340,7 @@ function AccountContent() {
             </Link>
             <span>&gt;</span>
             <button
-              onClick={() => setActiveTab("account")}
+              onClick={() => handleTabChange("account")}
               className={`hover:text-amber-500 transition ${activeTab === "account" ? "text-slate-900 dark:text-slate-200 font-extrabold" : ""}`}
             >
               My Account
@@ -227,186 +349,200 @@ function AccountContent() {
               <>
                 <span>&gt;</span>
                 <span className="text-slate-900 dark:text-slate-200 font-extrabold">
-                  {sidebarLinks.find((l) => l.id === activeTab)?.label || "Page"}
+                  {sidebarClusters.flatMap((c) => c.items).find((l) => l.id === activeTab)?.label || "Page"}
                 </span>
               </>
             )}
           </div>
         </div>
 
-        {/* Main My Account Layout Grid (Matches Screenshot 3) */}
+        {/* Main My Account Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Sidebar Navigation (3 cols on desktop, hidden on mobile when viewing a sub-tab) */}
-          <div className={`lg:col-span-3 bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-3 shadow-xs space-y-1 ${activeTab !== "account" ? "hidden lg:block" : "block"}`}>
-            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Account Navigation
-              </p>
-            </div>
+          {/* Left Sidebar Navigation (Clustered into logical groups with grounded active state) */}
+          <div className={`lg:col-span-3 bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/90 dark:border-slate-800 p-3 shadow-xs space-y-4 ${activeTab !== "account" ? "hidden lg:block" : "block"}`}>
+            
+            {sidebarClusters.map((cluster, idx) => (
+              <div key={cluster.title} className={idx > 0 ? "pt-3 border-t border-slate-100 dark:border-slate-800/80" : ""}>
+                <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  {cluster.title}
+                </p>
+                <div className="space-y-1">
+                  {cluster.items.map((link) => {
+                    const active = activeTab === link.id;
+                    return (
+                      <button
+                        key={link.id}
+                        onClick={() => handleTabChange(link.id)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                          active
+                            ? "bg-[#fffbeb] dark:bg-amber-400/15 text-[#d97706] dark:text-amber-400 border border-[#fde68a] dark:border-amber-400/30 shadow-xs"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Icon name={link.icon} className={`h-4 w-4 shrink-0 ${active ? "text-[#d97706] dark:text-amber-400" : "text-slate-400"}`} />
+                          <span className="truncate">{link.label}</span>
+                        </div>
+                        {link.count !== undefined && link.count > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black shrink-0">
+                            {link.count}
+                          </span>
+                        )}
+                        {link.activeBadge && (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">
+                            Active
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
-            {sidebarLinks.map((link) => {
-              const active = activeTab === link.id;
-              return (
-                <button
-                  key={link.id}
-                  onClick={() => setActiveTab(link.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-extrabold transition-all duration-200 cursor-pointer ${
-                    active
-                      ? "bg-[#fffbeb] dark:bg-amber-400/15 text-[#d97706] dark:text-amber-400 border border-[#fde68a] dark:border-amber-400/30 shadow-2xs"
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon name={link.icon} className={`h-4 w-4 ${active ? "text-[#d97706] dark:text-amber-400" : "text-slate-400"}`} />
-                    <span>{link.label}</span>
-                  </div>
-                  {link.id === "wishlist" && wishlistCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
-                      {wishlistCount}
-                    </span>
-                  )}
-                  {link.id === "orders" && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                      Active
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
               >
-                <Icon name="LogOut" className="h-4 w-4 text-rose-500" />
+                <Icon name="LogOut" className="h-4 w-4 text-rose-500 shrink-0" />
                 <span>Log Out</span>
               </button>
             </div>
           </div>
 
-          {/* Right Main Content Area (9 cols on desktop) */}
+          {/* Right Main Content Area (With Skeleton Loading for smooth tab transitions) */}
           <div className="lg:col-span-9 space-y-6">
 
-            {/* TAB 1: OVERVIEW GRID (My Account Overview - Hidden on mobile to avoid duplicate cards) */}
-            {activeTab === "account" && (
-              <div className="space-y-6 animate-fade-in">
-                <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  
-                  {/* Card 1: My Orders */}
-                  <button
-                    onClick={() => setActiveTab("orders")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="Package" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">My Orders</h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">Track &amp; manage order history</p>
-                    </div>
-                  </button>
-
-                  {/* Card 2: Addresses */}
-                  <button
-                    onClick={() => setActiveTab("addresses")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="MapPin" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Addresses</h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">{addresses.length} Saved Address</p>
-                    </div>
-                  </button>
-
-                  {/* Card 3: Wallet */}
-                  <button
-                    onClick={() => setActiveTab("wallet")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="Wallet" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Wallet</h3>
-                      <p className="text-xs text-[#d97706] dark:text-amber-400 font-extrabold mt-0.5">₹12,500 Credits Available</p>
-                    </div>
-                  </button>
-
-                  {/* Card 4: My Wishlists */}
-                  <button
-                    onClick={() => setActiveTab("wishlist")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="Heart" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">My Wishlists</h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">{wishlistCount} Saved Products</p>
-                    </div>
-                  </button>
-
-                  {/* Card 5: Shopping List */}
-                  <button
-                    onClick={() => setActiveTab("shopping-list")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="List" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Shopping List</h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">{shoppingList.length} Quick Items</p>
-                    </div>
-                  </button>
-
-                  {/* Card 6: Refer & Earn */}
-                  <button
-                    onClick={() => setActiveTab("refer")}
-                    className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
-                        <Icon name="Gift" className="h-5 w-5" />
-                      </div>
-                      <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white">Refer &amp; Earn</h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">Earn ₹500 per Referral</p>
-                    </div>
-                  </button>
-
-                  
-
+            {/* Skeleton Loading State during Tab Switch */}
+            {isTabSwitching ? (
+              <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-pulse">
+                <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                <div className="h-4 w-72 bg-slate-100 dark:bg-slate-800/60 rounded-lg" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+                  <div className="h-32 bg-slate-100 dark:bg-slate-800/50 rounded-2xl" />
+                  <div className="h-32 bg-slate-100 dark:bg-slate-800/50 rounded-2xl" />
+                  <div className="h-32 bg-slate-100 dark:bg-slate-800/50 rounded-2xl" />
                 </div>
- 
               </div>
-            )}
+            ) : (
+              <>
+                {/* TAB 1: OVERVIEW GRID */}
+                {activeTab === "account" && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      
+                      {/* Card 1: My Orders */}
+                      <button
+                        onClick={() => handleTabChange("orders")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="Package" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">My Orders</h3>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">Track &amp; manage order history</p>
+                        </div>
+                      </button>
+
+                      {/* Card 2: Addresses */}
+                      <button
+                        onClick={() => handleTabChange("addresses")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="MapPin" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">Addresses</h3>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{addresses.length} Saved Address</p>
+                        </div>
+                      </button>
+
+                      {/* Card 3: Wallet */}
+                      <button
+                        onClick={() => handleTabChange("wallet")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="Wallet" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">Wallet</h3>
+                          <p className="text-xs text-[#d97706] dark:text-amber-400 font-extrabold mt-0.5">$50.00 Credits Available</p>
+                        </div>
+                      </button>
+
+                      {/* Card 4: My Wishlists */}
+                      <button
+                        onClick={() => handleTabChange("wishlist")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="Heart" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">My Wishlists</h3>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{wishlistCount} Saved Products</p>
+                        </div>
+                      </button>
+
+                      {/* Card 5: Shopping List */}
+                      <button
+                        onClick={() => handleTabChange("shopping-list")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="List" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">Shopping List</h3>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">{shoppingList.length} Quick Items</p>
+                        </div>
+                      </button>
+
+                      {/* Card 6: Refer & Earn */}
+                      <button
+                        onClick={() => handleTabChange("refer")}
+                        className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 hover:border-amber-400/80 transition shadow-xs text-left group cursor-pointer space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="h-10 w-10 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-[#d97706] dark:text-amber-400 flex items-center justify-center font-bold">
+                            <Icon name="Gift" className="h-5 w-5" />
+                          </div>
+                          <Icon name="ChevronRight" className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white">Refer &amp; Earn</h3>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">Earn $500 per Referral</p>
+                        </div>
+                      </button>
+
+                    </div>
+                  </div>
+                )}
 
             {/* TAB 2: MY ORDERS */}
             {activeTab === "orders" && (
               <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
-                {/* Header matching Screenshot 1 */}
+                {/* Header with Dynamic Filtering Dropdowns */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
                   <div>
                     <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Orders</h3>
@@ -416,17 +552,26 @@ function AccountContent() {
                   <div className="flex items-center gap-3">
                     <div className="space-y-0.5">
                       <label className="text-[10px] font-bold text-slate-400 block">Date Range</label>
-                      <select className="bg-slate-100 dark:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border-none outline-none">
-                        <option value="all">All</option>
+                      <select
+                        value={orderDateFilter}
+                        onChange={(e) => setOrderDateFilter(e.target.value)}
+                        className="bg-slate-100 dark:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700 outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
+                      >
+                        <option value="all">All Dates</option>
                         <option value="30days">Last 30 Days</option>
-                        <option value="2026">2026</option>
+                        <option value="2026">2026 Orders</option>
                       </select>
                     </div>
 
                     <div className="space-y-0.5">
                       <label className="text-[10px] font-bold text-slate-400 block">Status</label>
-                      <select className="bg-slate-100 dark:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border-none outline-none">
-                        <option value="all">All</option>
+                      <select
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                        className="bg-slate-100 dark:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700 outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="processing">Processing</option>
                         <option value="transit">In Transit</option>
                         <option value="delivered">Delivered</option>
                       </select>
@@ -439,9 +584,9 @@ function AccountContent() {
                     <div className="h-8 w-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto" />
                     <p className="text-xs font-bold text-slate-400">Loading your orders...</p>
                   </div>
-                ) : userOrders.length > 0 ? (
+                ) : filteredOrders.length > 0 ? (
                   <div className="space-y-4">
-                    {userOrders.map((ord: any) => (
+                    {filteredOrders.map((ord: any) => (
                       <div
                         key={ord.orderId}
                         className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-4"
@@ -466,7 +611,7 @@ function AccountContent() {
                           </div>
                         </div>
 
-                        {/* Order Items List (Compact View with Expand/Collapse) */}
+                        {/* Order Items List */}
                         <div className="space-y-2.5">
                           {Array.isArray(ord.items) &&
                             (expandedOrders[ord.orderId] ? ord.items : ord.items.slice(0, 3)).map(
@@ -520,21 +665,43 @@ function AccountContent() {
                     ))}
                   </div>
                 ) : (
-                  /* Empty State */
-                  <div className="py-14 text-center space-y-4 max-w-sm mx-auto">
-                    <div className="h-14 w-14 rounded-2xl bg-[#fffbeb] border border-[#fde68a] text-amber-500 flex items-center justify-center mx-auto shadow-2xs">
-                      <Icon name="Package" className="h-7 w-7 text-amber-500" />
+                  /* Actionable Empty State + Recommended Products Grid */
+                  <div className="space-y-8">
+                    <div className="py-12 text-center space-y-4 max-w-sm mx-auto">
+                      <div className="h-14 w-14 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/15 border border-[#fde68a] dark:border-amber-400/30 text-amber-500 flex items-center justify-center mx-auto shadow-2xs">
+                        <Icon name="Package" className="h-7 w-7 text-amber-500" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">No Orders Found</h4>
+                        <p className="text-xs text-slate-400 font-medium">You haven&apos;t placed any orders matching this filter.</p>
+                      </div>
+                      <Link
+                        href="/"
+                        className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
+                      >
+                        Start Shopping
+                      </Link>
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">No Orders Found</h4>
-                      <p className="text-xs text-slate-400 font-medium">You haven&apos;t placed any orders yet.</p>
+
+                    {/* Recommended For You Section */}
+                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <span className="text-amber-500">✨</span> Recommended For You
+                          </h4>
+                          <p className="text-xs text-slate-400 font-medium">Trending items to get your collection started</p>
+                        </div>
+                        <Link href="/categories" className="text-xs font-bold text-sky-600 dark:text-amber-400 hover:underline">
+                          Explore All →
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {DEFAULT_PRODUCTS.slice(0, 4).map((prod) => (
+                          <ProductCard key={prod.slug} product={prod} />
+                        ))}
+                      </div>
                     </div>
-                    <Link
-                      href="/"
-                      className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
-                    >
-                      Start Shopping
-                    </Link>
                   </div>
                 )}
               </div>
@@ -543,20 +710,31 @@ function AccountContent() {
             {/* TAB 3: ADDRESSES */}
             {activeTab === "addresses" && (
               <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
-                {/* Header matching Screenshot 2 */}
+                {/* Header with Masking Toggle */}
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                   <div>
                     <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">My Addresses</h3>
                     <p className="text-xs text-slate-400 font-medium mt-0.5">Manage your address information for faster checkout and delivery</p>
                   </div>
 
-                  <button
-                    onClick={() => setShowAddAddressModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer"
-                  >
-                    <span>⊕</span>
-                    <span>Add New</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowSensitiveDetails((prev) => !prev)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
+                      title={showSensitiveDetails ? "Hide sensitive details" : "Show full details"}
+                    >
+                      <Icon name={showSensitiveDetails ? "EyeOff" : "Eye"} className="h-3.5 w-3.5 text-amber-500" />
+                      <span>{showSensitiveDetails ? "Mask Data" : "Reveal Data"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowAddAddressModal(true)}
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer"
+                    >
+                      <span>⊕</span>
+                      <span>Add New</span>
+                    </button>
+                  </div>
                 </div>
 
                 {addresses.length === 0 ? (
@@ -595,8 +773,8 @@ function AccountContent() {
                         </div>
                         <div className="text-xs text-slate-600 dark:text-slate-300 font-medium space-y-0.5">
                           <p className="font-bold text-slate-900 dark:text-white">{addr.recipient}</p>
-                          <p>{addr.street}</p>
-                          <p>{addr.city}, {addr.state} - {addr.zip}</p>
+                          <p>{showSensitiveDetails ? addr.street : "•••• •••••• ••••"}</p>
+                          <p>{addr.city}, {addr.state} - {showSensitiveDetails ? addr.zip : "•••001"}</p>
                           <p>{addr.country}</p>
                         </div>
                       </div>
@@ -663,27 +841,49 @@ function AccountContent() {
             {/* TAB 4: WISHLIST */}
             {activeTab === "wishlist" && (
               <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
-                {/* Header matching Screenshot 3 */}
+                {/* Header */}
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
                   <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Wishlists</h3>
                   <p className="text-xs text-slate-400 font-medium mt-0.5">Products you saved for later</p>
                 </div>
 
                 {wishlistItems.length === 0 ? (
-                  <div className="py-14 text-center space-y-4 max-w-sm mx-auto">
-                    <div className="h-14 w-14 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-500 flex items-center justify-center mx-auto shadow-2xs">
-                      <Icon name="Heart" className="h-7 w-7 text-rose-500 fill-rose-500" />
+                  <div className="space-y-8">
+                    <div className="py-12 text-center space-y-4 max-w-sm mx-auto">
+                      <div className="h-14 w-14 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-500 flex items-center justify-center mx-auto shadow-2xs">
+                        <Icon name="Heart" className="h-7 w-7 text-rose-500 fill-rose-500" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">Your wishlist is empty</h4>
+                        <p className="text-xs text-slate-400 font-medium">Save products while browsing to view them anytime here.</p>
+                      </div>
+                      <Link
+                        href="/"
+                        className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
+                      >
+                        Start Shopping
+                      </Link>
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">Your wishlist is empty</h4>
-                      <p className="text-xs text-slate-400 font-medium">Save products while browsing to view them anytime here.</p>
+
+                    {/* Actionable Recommended Products */}
+                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <span className="text-amber-500">💖</span> Recommended For Your Wishlist
+                          </h4>
+                          <p className="text-xs text-slate-400 font-medium">Popular items loved by other shoppers</p>
+                        </div>
+                        <Link href="/categories" className="text-xs font-bold text-sky-600 dark:text-amber-400 hover:underline">
+                          Explore All →
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {DEFAULT_PRODUCTS.slice(4, 8).map((prod) => (
+                          <ProductCard key={prod.slug} product={prod} />
+                        ))}
+                      </div>
                     </div>
-                    <Link
-                      href="/"
-                      className="inline-block px-7 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
-                    >
-                      Start Shopping
-                    </Link>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
@@ -719,13 +919,23 @@ function AccountContent() {
             {/* TAB 5: WALLET */}
             {activeTab === "wallet" && (
               <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
-                {/* Header matching Screenshot 4 */}
-                <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">My Wallet</h3>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">Manage your wallet balance, track transactions, and view credits.</p>
+                {/* Header with Masking Toggle */}
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">My Wallet</h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">Manage your wallet balance, track transactions, and view credits.</p>
+                  </div>
+
+                  <button
+                    onClick={() => setShowSensitiveDetails((prev) => !prev)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
+                  >
+                    <Icon name={showSensitiveDetails ? "EyeOff" : "Eye"} className="h-3.5 w-3.5 text-amber-500" />
+                    <span>{showSensitiveDetails ? "Mask Number" : "Reveal Number"}</span>
+                  </button>
                 </div>
 
-                {/* Wallet Balance Card matching Screenshot 4 */}
+                {/* Wallet Balance Card */}
                 <div className="p-6 rounded-2xl bg-[#fffbeb] dark:bg-amber-400/10 border border-[#fde68a] dark:border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xs">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -739,7 +949,7 @@ function AccountContent() {
                     </div>
 
                     <p className="text-xs font-bold text-amber-800/70 dark:text-amber-200/70 tracking-widest font-mono">
-                      XXXX XXXX XXXX XX72
+                      {showSensitiveDetails ? "4829 1029 8402 7392" : "XXXX XXXX XXXX XX72"}
                     </p>
                   </div>
 
@@ -1050,6 +1260,8 @@ function AccountContent() {
                 </div>
               </div>
             )}
+            </>
+          )}
 
           </div>
 

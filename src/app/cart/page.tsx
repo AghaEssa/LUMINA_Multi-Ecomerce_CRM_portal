@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { SiteFooter } from "@/components/common/Footer";
 import { Icon } from "@/components/common/Icons";
+import { ProductCard } from "@/components/common/ProductCard";
+import { DEFAULT_PRODUCTS } from "@/lib/products";
 import { useCartContext } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -51,8 +53,18 @@ export default function CartOverviewPage() {
   const discountAmount = appliedDiscount
     ? (subtotal * appliedDiscount.percentage) / 100
     : 0;
-  const originalSubtotal = Math.round((subtotal * 1.15) * 100) / 100;
+  const originalSubtotal = Math.round((subtotal * 1.18) * 100) / 100;
   const savings = Math.max(50, Math.round((originalSubtotal - subtotal + discountAmount) * 100) / 100);
+
+  // Free Shipping Threshold ($150 target)
+  const FREE_SHIPPING_THRESHOLD = 150;
+  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+
+  // Suggested Cross-Sell Items
+  const crossSellProducts = DEFAULT_PRODUCTS.filter(
+    (p) => !cartItems.some((ci) => ci.productSlug === p.slug)
+  ).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#060b13] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-300">
@@ -61,7 +73,7 @@ export default function CartOverviewPage() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
         
-        {/* Breadcrumb Navigation matching Screenshot 1 */}
+        {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
           <Link href="/" className="hover:text-amber-500 transition flex items-center gap-1">
             <Icon name="Home" className="h-3.5 w-3.5" />
@@ -83,25 +95,27 @@ export default function CartOverviewPage() {
           </div>
         </div>
 
-        {/* Main Grid: Cart Items on Left + Bill Details on Right */}
+        {/* Main Grid: Cart Items on Left + Bill Details Sticky Column on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Side: Cart Items List (8 cols) */}
           <div className="lg:col-span-8 space-y-4">
             {cartItems.length === 0 ? (
-              <div className="p-10 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 text-center space-y-3">
-                <div className="h-16 w-16 rounded-full bg-amber-50 dark:bg-amber-400/10 text-amber-500 flex items-center justify-center mx-auto">
+              <div className="p-10 sm:p-14 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 text-center space-y-4 shadow-xs">
+                <div className="h-16 w-16 rounded-full bg-amber-50 dark:bg-amber-400/10 text-amber-500 flex items-center justify-center mx-auto border border-amber-200 dark:border-amber-400/30">
                   <Icon name="ShoppingCart" className="h-8 w-8 text-amber-500" />
                 </div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white">Your Cart is Empty</h3>
-                <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                  You don&apos;t have any active items in your shopping cart.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Your Cart is Empty</h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto font-medium">
+                    You don&apos;t have any active items in your shopping cart right now.
+                  </p>
+                </div>
                 <Link
                   href="/"
-                  className="inline-block px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
+                  className="inline-block px-7 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition"
                 >
-                  Explore Catalog
+                  Explore Storefront Catalog
                 </Link>
               </div>
             ) : (
@@ -117,7 +131,7 @@ export default function CartOverviewPage() {
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                       
-                      {/* Thumbnail & Quantity Stepper Below Image (Exact Screenshot 1 Layout) */}
+                      {/* Thumbnail & Quantity Stepper Below Image */}
                       <div className="flex flex-col items-center gap-3 shrink-0">
                         <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-800">
                           {item.image.startsWith("data:") ? (
@@ -138,27 +152,39 @@ export default function CartOverviewPage() {
                           )}
                         </div>
 
-                        {/* Quantity Stepper Pill (- 1 +) */}
-                        <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-2 py-1 gap-3">
+                        {/* Quantity Stepper Pill (- 1 + with trash feedback on 1) */}
+                        <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-2 py-1 gap-2.5">
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="h-5 w-5 rounded flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs cursor-pointer"
+                            onClick={() => {
+                              if (item.quantity === 1) {
+                                removeFromCart(item.id);
+                              } else {
+                                updateQuantity(item.id, item.quantity - 1);
+                              }
+                            }}
+                            className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs cursor-pointer"
+                            title={item.quantity === 1 ? "Remove item from cart" : "Decrease quantity"}
                           >
-                            -
+                            {item.quantity === 1 ? (
+                              <Icon name="Trash2" className="h-3.5 w-3.5 text-rose-500 hover:scale-110 transition" />
+                            ) : (
+                              "-"
+                            )}
                           </button>
                           <span className="w-4 text-center text-xs font-black text-slate-900 dark:text-white">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="h-5 w-5 rounded flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs cursor-pointer"
+                            className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs cursor-pointer"
+                            title="Increase quantity"
                           >
                             +
                           </button>
                         </div>
                       </div>
 
-                      {/* Product Details & Action Buttons (Exact Screenshot 1 Layout) */}
+                      {/* Product Details & Action Buttons */}
                       <div className="flex-1 min-w-0 space-y-2.5 w-full">
                         {/* Sold By Vendor Tag */}
                         <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-semibold">
@@ -184,12 +210,12 @@ export default function CartOverviewPage() {
                           </span>
                         </div>
 
-                        {/* Savings Text */}
+                        {/* Instant Savings Text */}
                         <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                           You saved ${itemSavedAmount.toFixed(2)}
                         </p>
 
-                        {/* Action Buttons Row: Saved for Later + Remove Item (Theme Harmonized) */}
+                        {/* Action Buttons Row: Saved for Later + Remove Item */}
                         <div className="flex flex-wrap items-center gap-3 pt-2">
                           <button
                             onClick={() => saveForLater(item.id)}
@@ -216,8 +242,8 @@ export default function CartOverviewPage() {
             )}
           </div>
 
-          {/* Right Side: Bill Details Summary (4 cols) */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* Right Side: Bill Details Summary (4 cols - Sticky Column) */}
+          <div className="lg:col-span-4 space-y-6 sticky top-28 self-start">
             <div className="p-6 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
               
               {/* Header with Clear Cart */}
@@ -234,7 +260,28 @@ export default function CartOverviewPage() {
                 )}
               </div>
 
-              {/* Items Total & Delivery Calculation */}
+              {/* Dynamic Free Shipping Progress Bar ($150 target) */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                <div className="flex items-center justify-between text-xs font-black text-slate-900 dark:text-white">
+                  <span className="flex items-center gap-1.5">
+                    <span>🚚</span>
+                    <span>
+                      {remainingForFreeShipping === 0
+                        ? "Free Express Shipping Unlocked!"
+                        : `Add $${remainingForFreeShipping.toFixed(2)} for FREE Shipping`}
+                    </span>
+                  </span>
+                  <span className="text-amber-500 font-extrabold">{Math.round(freeShippingProgress)}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-emerald-500 transition-all duration-500"
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Items Total & Shipping Calculation */}
               <div className="space-y-3 text-xs font-semibold">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
                   <span>Items Total</span>
@@ -244,16 +291,20 @@ export default function CartOverviewPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                  <Icon name="Info" className="h-3.5 w-3.5 shrink-0" />
-                  <span>Delivery &amp; fees calculated at checkout</span>
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span>Shipping Estimate</span>
+                  <span className={remainingForFreeShipping === 0 ? "text-emerald-600 dark:text-emerald-400 font-extrabold" : "text-slate-900 dark:text-white font-bold"}>
+                    {remainingForFreeShipping === 0 ? "FREE" : "$12.00"}
+                  </span>
                 </div>
               </div>
 
               {/* Total Amount Row */}
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between">
                 <span className="text-sm font-black text-slate-900 dark:text-white">Total Amount</span>
-                <span className="text-xl font-black text-slate-900 dark:text-white">${subtotal.toFixed(2)}</span>
+                <span className="text-xl font-black text-slate-900 dark:text-white">
+                  ${(subtotal + (remainingForFreeShipping === 0 ? 0 : 12)).toFixed(2)}
+                </span>
               </div>
 
               {/* Green Discount Banner */}
@@ -274,14 +325,31 @@ export default function CartOverviewPage() {
                 className="w-full py-3.5 px-6 rounded-2xl bg-[#f59e0b] hover:bg-[#d97706] active:scale-[0.99] text-slate-950 font-black text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Proceed to Checkout</span>
+                <Icon name="ArrowRight" className="h-4 w-4 stroke-[2.5]" />
               </button>
+
+              {/* Trust Signals & Payment Provider Badges */}
+              <div className="pt-2 text-center space-y-2.5 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="flex items-center justify-center gap-2 text-slate-400">
+                  <Icon name="Lock" className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">100% Encrypted &amp; Secure Checkout</span>
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 opacity-80">
+                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">VISA</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Mastercard</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">AMEX</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">PayPal</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Apple Pay</span>
+                </div>
+              </div>
 
             </div>
           </div>
 
         </div>
 
-        {/* SECTION 2: Saved for Later Section (Matching Screenshot 2) */}
+        {/* SECTION 2: Saved for Later Section */}
         <div className="pt-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-3">
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
@@ -372,6 +440,30 @@ export default function CartOverviewPage() {
               })}
             </div>
           )}
+        </div>
+
+        {/* SECTION 3: Cross-Selling "You Might Also Like" Section */}
+        <div className="pt-8 space-y-4 border-t border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span className="text-amber-500">🔥</span>
+                <span>You Might Also Like</span>
+              </h2>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                Frequently bought together with items in your cart
+              </p>
+            </div>
+            <Link href="/categories" className="text-xs font-bold text-sky-600 dark:text-amber-400 hover:underline">
+              Explore All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {crossSellProducts.map((product) => (
+              <ProductCard key={product.slug} product={product} />
+            ))}
+          </div>
         </div>
 
       </main>
