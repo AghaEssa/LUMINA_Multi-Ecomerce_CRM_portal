@@ -916,6 +916,45 @@ function AccountContent() {
               </div>
             )}
 
+            {/* TAB: SHOPPING LIST */}
+            {activeTab === "shopping-list" && (
+              <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="List" className="h-5 w-5 text-amber-500" />
+                      <span>Shopping List</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">Quickly re-order your frequent groceries, essentials, and saved items.</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-400/10 text-amber-800 dark:text-amber-300 text-xs font-black">
+                    3 Saved Essentials
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {DEFAULT_PRODUCTS.slice(0, 3).map((prod) => (
+                    <div key={prod.slug} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <img src={prod.image} alt={prod.title} className="h-12 w-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
+                        <div className="overflow-hidden">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{prod.title}</h4>
+                          <span className="text-xs font-black text-amber-600 dark:text-amber-400">${prod.price}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => addToCart({ product: prod, quantity: 1, openDrawer: true })}
+                        className="w-full py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="ShoppingCart" className="h-3.5 w-3.5" />
+                        <span>Add to Quick Cart</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* TAB 5: WALLET */}
             {activeTab === "wallet" && (
               <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-6 animate-fade-in">

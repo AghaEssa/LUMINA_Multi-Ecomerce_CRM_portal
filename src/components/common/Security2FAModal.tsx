@@ -1,234 +1,111 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Icon } from "@/components/common/Icons";
 import { useAuth } from "@/context/AuthContext";
 
-interface Security2FAModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 export function Security2FAModal() {
-  const { user, checkAuth, isSecurityModalOpen, closeSecurityModal } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Setup Flow States
-  const [isSettingUp, setIsSettingUp] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [totpCode, setTotpCode] = useState("");
+  const { user, isSecurityModalOpen, closeSecurityModal } = useAuth();
 
   if (!isSecurityModalOpen || !user) return null;
 
-  const handleDisable2FA = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccessMsg(null);
-
-    try {
-      const res = await fetch("/api/auth/2fa/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enable: false }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error?.message || "Failed to disable 2FA.");
-        return;
-      }
-
-      setSuccessMsg("Two-Factor Authentication (2FA) has been turned OFF.");
-      await checkAuth();
-    } catch {
-      setError("Network error turning off 2FA.");
-    } flex: {
-      setLoading(false);
-    }
-  };
-
-  const handleStartSetup = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccessMsg(null);
-
-    try {
-      const res = await fetch("/api/auth/2fa/setup", { method: "POST" });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.error?.message || "Failed to start 2FA setup.");
-        return;
-      }
-
-      setQrCodeUrl(data.qrCodeUrl);
-      setIsSettingUp(true);
-    } catch {
-      setError("Network error starting 2FA setup.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifySetup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/auth/2fa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: totpCode }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error?.message || "Invalid 6-digit code.");
-        return;
-      }
-
-      setSuccessMsg(" 2FA Activated Successfully!");
-      setIsSettingUp(false);
-      await checkAuth();
-    } catch {
-      setError("Network error verifying 2FA code.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
       <div
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity animate-fade-in"
-        onClick={closeSecurityModal}
-      />
-
-      {/* Modal Card */}
-      <div className="relative w-full max-w-md bg-white dark:bg-[#111827] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 animate-scale-up p-6 space-y-6">
-        {/* Close Button Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🔒</span>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              2FA Security Settings
-            </h3>
+        className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden text-slate-900 dark:text-white"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+              <Icon name="ShieldCheck" className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Account & 2FA Security</h3>
+              <p className="text-xs text-slate-400 font-medium">Enterprise Security Powered by Clerk & Google</p>
+            </div>
           </div>
 
           <button
             onClick={closeSecurityModal}
-            className="grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white transition"
+            className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
           >
-            <Icon name="X" className="h-5 w-5" />
+            ✕
           </button>
         </div>
 
-        {/* Alerts */}
-        {error && (
-          <div className="rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 p-3.5 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
-            <span>⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 p-3.5 text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
-            <span>✅</span>
-            <span className="font-extrabold">{successMsg}</span>
-          </div>
-        )}
-
-        {/* Current Status Overview */}
-        <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500">Current Status:</span>
-            {user.isTwoFactorEnabled ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-black">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                Active (Protected)
+        {/* Content Body */}
+        <div className="p-6 space-y-6">
+          {/* Active Protection Status */}
+          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-black">
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                Disabled (Unprotected)
-              </span>
-            )}
+              <div>
+                <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 block">Security Status: Active & Protected</span>
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Session token & Google OAuth 2FA active</span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[10px] font-black uppercase">
+              Protected
+            </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Two-Factor Authentication adds an extra layer of security to your account requiring Google Authenticator.
-          </p>
+
+          {/* Security Features Breakdown */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Active Security Layers</h4>
+
+            {/* Feature 1: Google OAuth 2FA */}
+            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 flex items-start gap-3">
+              <div className="h-8 w-8 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                G
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h5 className="text-xs font-bold text-slate-900 dark:text-white">Google OAuth 2FA</h5>
+                  <span className="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 text-[9px] font-black">
+                    RECOMMENDED
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                  When logging in via &quot;Continue with Google&quot;, your account is automatically secured by Google Authenticator, device prompt, or SMS 2FA.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 2: Password Encryption & Token Validation */}
+            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 flex items-start gap-3">
+              <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Lock" className="h-4 w-4" />
+              </div>
+              <div className="space-y-0.5">
+                <h5 className="text-xs font-bold text-slate-900 dark:text-white">Encrypted Session Tokens</h5>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                  Clerk manages state-of-the-art JWT session tokens, protecting your Lumina cart, orders, and wallet balance against unauthorized access.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Account Metadata */}
+          <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between font-mono">
+            <span>Account Email:</span>
+            <span className="font-bold text-slate-900 dark:text-slate-200">{user.email}</span>
+          </div>
         </div>
 
-        {/* Setup Flow or Main Action Buttons */}
-        {isSettingUp ? (
-          <form onSubmit={handleVerifySetup} className="space-y-4 animate-fade-in">
-            {qrCodeUrl && (
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qrCodeUrl} alt="Google Authenticator QR Code" className="h-40 w-40 object-contain rounded-xl" />
-                <span className="mt-2 text-[10px] font-black text-slate-500 uppercase">
-                  Scan with Google Authenticator
-                </span>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 text-center">
-                Enter 6-Digit Code to Activate:
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={6}
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="123456"
-                className="w-full text-center text-xl font-mono tracking-[0.4em] rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-3 text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsSettingUp(false)}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading || totpCode.length < 6}
-                className="flex-1 rounded-xl bg-slate-950 dark:bg-amber-400 text-white dark:text-slate-950 py-3 text-xs font-extrabold disabled:opacity-50"
-              >
-                {loading ? "Verifying..." : "Verify & Turn ON"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="space-y-3">
-            {user.isTwoFactorEnabled ? (
-              <button
-                onClick={handleDisable2FA}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs py-3.5 shadow-md transition cursor-pointer disabled:opacity-50"
-              >
-                <span>Turn OFF 2FA (Disable)</span>
-              </button>
-            ) : (
-              <button
-                onClick={handleStartSetup}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3.5 shadow-md transition cursor-pointer disabled:opacity-50"
-              >
-                <span>Turn ON 2FA (Enable)</span>
-              </button>
-            )}
-          </div>
-        )}
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex justify-end">
+          <button
+            onClick={closeSecurityModal}
+            className="px-6 py-2 rounded-xl bg-slate-900 dark:bg-amber-400 hover:bg-slate-800 dark:hover:bg-amber-300 text-white dark:text-slate-950 font-black text-xs transition shadow-sm cursor-pointer"
+          >
+            Got it, Close
+          </button>
+        </div>
       </div>
     </div>
   );

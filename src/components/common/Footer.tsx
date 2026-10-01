@@ -21,7 +21,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-[#090d16] dark:bg-[#05080e] text-slate-100 border-t border-slate-800/90 relative overflow-hidden font-sans">
+    <footer className="bg-[#090d16] dark:bg-[#05080e] text-slate-100 border-t border-slate-800/90 relative overflow-hidden font-sans pb-20 md:pb-0">
       {/* Top Accent Gradient Line */}
       <div className="h-1 w-full bg-gradient-to-r from-sky-600 via-sky-400 to-amber-400" />
 

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@/components/common/Icons";
 import { useCartContext, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -98,7 +99,6 @@ export function CartDrawer() {
     return Object.values(groups);
   }, [cartItems]);
 
-  if (!isCartOpen) return null;
 
   const isMultiCategory = groupedCart.length > 1;
   const categoryCount = groupedCart.length;
@@ -124,16 +124,28 @@ export function CartDrawer() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Dark Blurred Backdrop Overlay */}
-      <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
-        onClick={closeCart}
-      />
+    <AnimatePresence>
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Dark Blurred Backdrop Overlay with Framer Motion */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+            onClick={closeCart}
+          />
 
-      {/* Slide-over Right Side Panel Container */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10 z-50">
-        <div className={`w-screen ${drawerWidthClass} bg-white dark:bg-[#111827] shadow-2xl flex flex-col h-full border-l border-slate-200/80 dark:border-slate-800 transition-all duration-300 animate-slide-left`}>
+          {/* Slide-over Right Side Panel Container */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10 z-50 pointer-events-none">
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className={`w-screen ${drawerWidthClass} bg-white dark:bg-[#111827] shadow-2xl flex flex-col h-full border-l border-slate-200/80 dark:border-slate-800 pointer-events-auto`}
+            >
           
           {/* Cart Drawer Top Header */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800/80 shrink-0">
@@ -462,16 +474,18 @@ export function CartDrawer() {
             </div>
           )}
 
-        </div>
-      </div>
+            </motion.div>
+          </div>
 
-      {/* Item Inline Quick-View Modal */}
-      {inspectingItem && (
-        <ItemQuickViewModal
-          item={inspectingItem}
-          onClose={() => setInspectingItem(null)}
-        />
+          {/* Item Inline Quick-View Modal */}
+          {inspectingItem && (
+            <ItemQuickViewModal
+              item={inspectingItem}
+              onClose={() => setInspectingItem(null)}
+            />
+          )}
+        </div>
       )}
-    </div>
+    </AnimatePresence>
   );
 }

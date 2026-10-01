@@ -1,5 +1,4 @@
-import { connectToDatabase } from "@/lib/mongodb";
-import { Product } from "@/models/Product";
+import { prisma } from "@/lib/prisma";
 import { getProductDisplayImage } from "@/lib/product-images";
 
 export type ProductItem = {
@@ -748,39 +747,36 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
 export async function getProductsByCategory(categorySlug: string): Promise<ProductItem[]> {
   const normSlug = categorySlug.toLowerCase().trim();
   try {
-    await connectToDatabase();
-    const productsFromDb = await Product.find(
-      { categorySlug: normSlug },
-      { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }
-    )
-      .sort({ price: 1 })
-      .lean();
+    const productsFromDb = await prisma.product.findMany({
+      where: { categorySlug: normSlug },
+      orderBy: { price: "asc" },
+    });
 
     if (productsFromDb && productsFromDb.length > 0) {
       return productsFromDb.map((prod) => {
-        const title = String(prod.title);
+        const title = prod.title;
         const image = prod.image
-          ? String(prod.image)
-          : getProductDisplayImage({ image: undefined, categorySlug: normSlug, title, brand: String(prod.brand) });
+          ? prod.image
+          : getProductDisplayImage({ image: undefined, categorySlug: normSlug, title, brand: prod.brand });
         
         return {
           title,
-          slug: String(prod.slug),
-          categorySlug: String(prod.categorySlug),
-          subCategory: prod.subCategory ? String(prod.subCategory) : "General",
-          price: Number(prod.price),
-          originalPrice: prod.originalPrice ? Number(prod.originalPrice) : Math.round(Number(prod.price) * 1.18 * 100) / 100,
-          discountPercent: prod.discountPercent ? String(prod.discountPercent) : "15% OFF",
+          slug: prod.slug,
+          categorySlug: prod.categorySlug,
+          subCategory: prod.subCategory || "General",
+          price: prod.price,
+          originalPrice: prod.originalPrice ?? Math.round(prod.price * 1.18 * 100) / 100,
+          discountPercent: prod.discountPercent || "15% OFF",
           image,
-          secondaryImage: prod.secondaryImage ? String(prod.secondaryImage) : undefined,
-          brand: String(prod.brand),
-          rating: Number(prod.rating),
-          description: prod.description ? String(prod.description) : "",
-          inStock: prod.inStock !== undefined ? Boolean(prod.inStock) : true,
-          badge: prod.badge ? String(prod.badge) : "",
-          tags: prod.tags ? (prod.tags as string[]) : ["popular", "in-stock"],
-          sizes: prod.sizes ? (prod.sizes as string[]) : ["S", "M", "L", "XL"],
-          colors: prod.colors ? prod.colors : [{ name: "Black", hex: "#0f172a" }, { name: "Navy", hex: "#1e3a8a" }],
+          secondaryImage: prod.secondaryImage || undefined,
+          brand: prod.brand,
+          rating: prod.rating,
+          description: prod.description || "",
+          inStock: prod.inStock ?? true,
+          badge: prod.badge || "",
+          tags: prod.tags && prod.tags.length > 0 ? prod.tags : ["popular", "in-stock"],
+          sizes: prod.sizes && prod.sizes.length > 0 ? prod.sizes : ["S", "M", "L", "XL"],
+          colors: (prod.colors as { name: string; hex: string }[]) || [{ name: "Black", hex: "#0f172a" }, { name: "Navy", hex: "#1e3a8a" }],
         };
       });
     }
@@ -793,7 +789,7 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
 
     return filteredDefaults.length > 0 ? filteredDefaults : DEFAULT_PRODUCTS.slice(0, 8);
   } catch (error) {
-    console.warn("MongoDB product query notice:", error instanceof Error ? error.message : error);
+    console.warn("PostgreSQL product query notice:", error instanceof Error ? error.message : error);
     const filteredDefaults = DEFAULT_PRODUCTS.filter((p) => p.categorySlug === normSlug).map((prod) => ({
       ...prod,
       image: getProductDisplayImage(prod),
@@ -805,38 +801,39 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
 export async function getProductBySlug(slug: string): Promise<ProductItem | undefined> {
   const normSlug = slug.toLowerCase().trim();
   try {
-    await connectToDatabase();
-    const prodFromDb = (await Product.findOne(
-      { slug: normSlug },
-      { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }
-    ).lean()) as Record<string, any> | null;
+    const prodFromDb = await prisma.product.findUnique({
+      where: { slug: normSlug },
+    });
 
     if (prodFromDb) {
-      const title = String(prodFromDb.title);
-      const categorySlug = String(prodFromDb.categorySlug);
+      const title = prodFromDb.title;
+      const categorySlug = prodFromDb.categorySlug;
       const image = prodFromDb.image
-        ? String(prodFromDb.image)
-        : getProductDisplayImage({ image: undefined, categorySlug, title, brand: String(prodFromDb.brand) });
+        ? prodFromDb.image
+        : getProductDisplayImage({ image: undefined, categorySlug, title, brand: prodFromDb.brand });
 
       return {
         title,
-        slug: String(prodFromDb.slug),
+        slug: prodFromDb.slug,
         categorySlug,
-        subCategory: prodFromDb.subCategory ? String(prodFromDb.subCategory) : "General",
-        price: Number(prodFromDb.price),
-        originalPrice: prodFromDb.originalPrice ? Number(prodFromDb.originalPrice) : Math.round(Number(prodFromDb.price) * 1.18 * 100) / 100,
-        discountPercent: prodFromDb.discountPercent ? String(prodFromDb.discountPercent) : "15% OFF",
+        subCategory: prodFromDb.subCategory || "General",
+        price: prodFromDb.price,
+        originalPrice: prodFromDb.originalPrice ?? Math.round(prodFromDb.price * 1.18 * 100) / 100,
+        discountPercent: prodFromDb.discountPercent || "15% OFF",
         image,
-        brand: String(prodFromDb.brand),
-        rating: Number(prodFromDb.rating),
-        description: prodFromDb.description ? String(prodFromDb.description) : "",
-        inStock: prodFromDb.inStock !== undefined ? Boolean(prodFromDb.inStock) : true,
-        badge: prodFromDb.badge ? String(prodFromDb.badge) : "",
-        tags: prodFromDb.tags ? (prodFromDb.tags as string[]) : ["popular", "in-stock"],
+        secondaryImage: prodFromDb.secondaryImage || undefined,
+        brand: prodFromDb.brand,
+        rating: prodFromDb.rating,
+        description: prodFromDb.description || "",
+        inStock: prodFromDb.inStock ?? true,
+        badge: prodFromDb.badge || "",
+        tags: prodFromDb.tags && prodFromDb.tags.length > 0 ? prodFromDb.tags : ["popular", "in-stock"],
+        sizes: prodFromDb.sizes && prodFromDb.sizes.length > 0 ? prodFromDb.sizes : ["S", "M", "L", "XL"],
+        colors: (prodFromDb.colors as { name: string; hex: string }[]) || undefined,
       };
     }
   } catch (error) {
-    console.warn("MongoDB single product query notice:", error instanceof Error ? error.message : error);
+    console.warn("PostgreSQL single product query notice:", error instanceof Error ? error.message : error);
   }
 
   // Fallback: Check DEFAULT_PRODUCTS for exact match

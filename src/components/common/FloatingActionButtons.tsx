@@ -12,16 +12,7 @@ export function FloatingActionButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    // Only show floating buttons after entire window load completes & client is fully mounted
-    const handleLoadComplete = () => {
-      setMounted(true);
-    };
-
-    if (document.readyState === "complete") {
-      setMounted(true);
-    } else {
-      window.addEventListener("load", handleLoadComplete);
-    }
+    setMounted(true);
 
     const handleScroll = () => {
       if (window.scrollY > 200) {
@@ -33,10 +24,10 @@ export function FloatingActionButtons() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      window.removeEventListener("load", handleLoadComplete);
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
 
   const scrollToTop = () => {
     window.scrollTo({

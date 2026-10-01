@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 import type { ProductItem } from "@/lib/products";
 
 export interface UserProfile {
@@ -39,8 +40,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const { signOut, openSignIn, openSignUp, openUserProfile } = useClerk();
+
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false);
@@ -48,45 +50,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingProduct, setPendingProduct] = useState<ProductItem | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
-  // Fetch current user session on mount
+  // Map Clerk user data to application's UserProfile schema
+  const user: UserProfile | null = useMemo(() => {
+    if (!isLoaded || !isSignedIn || !clerkUser) return null;
+
+    const email = clerkUser.primaryEmailAddress?.emailAddress || "";
+    const name = clerkUser.fullName || clerkUser.username || email.split("@")[0] || "User";
+    const role = (clerkUser.publicMetadata?.role as "admin" | "editor" | "customer") || "customer";
+
+    return {
+      id: clerkUser.id,
+      name,
+      email,
+      role,
+      isTwoFactorEnabled: clerkUser.twoFactorEnabled || false,
+      lastLoginAt: clerkUser.lastSignInAt ? new Date(clerkUser.lastSignInAt).toISOString() : undefined,
+      createdAt: clerkUser.createdAt ? new Date(clerkUser.createdAt).toISOString() : undefined,
+    };
+  }, [clerkUser, isLoaded, isSignedIn]);
+
+  const isLoading = !isLoaded;
+
   const checkAuth = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      let res = await fetch("/api/auth/me", { method: "GET" });
-
-      if (res.status === 401) {
-        // Access token might be expired. Attempt refresh using refresh token cookie.
-        const refreshRes = await fetch("/api/auth/refresh", { method: "POST" });
-        if (refreshRes.ok) {
-          res = await fetch("/api/auth/me", { method: "GET" });
-        }
-      }
-
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+    // Clerk handles session state automatically
   }, []);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   const openAuthModal = useCallback(
     (mode: AuthModalMode = "login", _product: ProductItem | null = null, _onSuccess?: () => void) => {
-      const targetPage = mode === "register" ? "/register" : "/login";
-      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/account";
-      const callbackUrl = currentPath !== "/login" && currentPath !== "/register" ? currentPath : "/account";
-      window.location.href = `${targetPage}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      if (mode === "register") {
+        openSignUp();
+      } else {
+        openSignIn();
+      }
     },
-    []
+    [openSignIn, openSignUp]
   );
 
   const closeAuthModal = useCallback(() => {
@@ -95,38 +92,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingAction(null);
   }, []);
 
-  const openProfileModal = useCallback(() => setIsProfileModalOpen(true), []);
+  const openProfileModal = useCallback(() => {
+    openUserProfile();
+  }, [openUserProfile]);
+
   const closeProfileModal = useCallback(() => setIsProfileModalOpen(false), []);
   const openSecurityModal = useCallback(() => setIsSecurityModalOpen(true), []);
   const closeSecurityModal = useCallback(() => setIsSecurityModalOpen(false), []);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      setUser(null);
-      closeAuthModal();
-      closeProfileModal();
-      closeSecurityModal();
-      window.location.href = "/";
-    }
-  }, [closeAuthModal, closeProfileModal, closeSecurityModal]);
+    await signOut({ redirectUrl: "/" });
+  }, [signOut]);
 
-  /**
-   * Protected Action Helper:
-   * If authenticated -> runs onSuccessAction immediately and returns true.
-   * If unauthenticated -> opens Auth Modal, saves pending action/product, and returns false.
-   */
   const requireAuth = useCallback(
     (onSuccessAction: () => void, product?: ProductItem): boolean => {
-      if (user) {
+      if (isSignedIn && user) {
         onSuccessAction();
         return true;
       }
       openAuthModal("login", product || null, onSuccessAction);
       return false;
     },
-    [user, openAuthModal]
+    [isSignedIn, user, openAuthModal]
   );
 
   return (
@@ -157,7 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
@@ -165,3 +151,4 @@ export function useAuth() {
   }
   return context;
 }
+

@@ -1,0 +1,142 @@
+// Prisma Schema for LUMINA E-Commerce Platform
+// Database: PostgreSQL on Neon Serverless
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  slug          String    @unique
+  icon          String
+  description   String?   @default("")
+  itemCount     Int       @default(0)
+  badge         String?   @default("")
+  image         String?   @default("")
+  heroImage     String?   @default("")
+  featured      Boolean   @default(true)
+  subCategories String[]  @default([])
+  bannerTagline String?   @default("")
+  products      Product[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+model Product {
+  id              String      @id @default(cuid())
+  title           String
+  slug            String      @unique
+  categorySlug    String
+  subCategory     String      @default("General")
+  price           Float
+  originalPrice   Float?
+  discountPercent String?
+  image           String
+  secondaryImage  String?
+  brand           String
+  rating          Float       @default(4.5)
+  description     String      @default("")
+  inStock         Boolean     @default(true)
+  badge           String      @default("")
+  tags            String[]    @default([])
+  sizes           String[]    @default([])
+  colors          Json?
+
+  category        Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId      String?
+
+  orderItems      OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([categorySlug])
+  @@index([brand])
+  @@index([subCategory])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderId       String      @unique
+  userId        String?
+  fullName      String
+  email         String
+  phone         String
+  address       String
+  city          String
+  postalCode    String
+  country       String      @default("United States")
+  paymentMethod String
+  subtotal      Float
+  estimatedTax  Float
+  shippingFee   Float
+  grandTotal    Float
+  status        String      @default("processing")
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([orderId])
+  @@index([email])
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title     String
+  price     Float
+  quantity  Int
+  image     String
+  size      String?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  clerkId            String?   @unique
+  name               String?   @default("")
+  email              String    @unique
+  password           String?
+  role               String    @default("customer")
+  isTwoFactorEnabled Boolean   @default(false)
+  twoFactorSecret    String?
+  refreshTokenHash   String?
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([email])
+  @@index([clerkId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  status    String   @default("SUCCESS")
+  email     String?  @default("")
+  userId    String?
+  details   Json?
+  ipAddress String?  @default("127.0.0.1")
+  userAgent String?  @default("unknown")
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([status])
+  @@index([userId])
+  @@index([email])
+}

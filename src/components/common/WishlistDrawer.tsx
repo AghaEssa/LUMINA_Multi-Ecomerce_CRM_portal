@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@/components/common/Icons";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCartContext } from "@/context/CartContext";
@@ -32,19 +33,30 @@ export function WishlistDrawer() {
     };
   }, [isWishlistOpen]);
 
-  if (!isWishlistOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Dark Blur Overlay */}
-      <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-fade-in"
-        onClick={closeWishlist}
-      />
+    <AnimatePresence>
+      {isWishlistOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Dark Blur Overlay with Framer Motion */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+            onClick={closeWishlist}
+          />
 
-      {/* Slide-over Right Panel Container */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10 z-50">
-        <div className="w-screen max-w-md sm:max-w-lg bg-white dark:bg-[#111827] shadow-2xl flex flex-col h-full border-l border-slate-200 dark:border-slate-800 animate-slide-left">
+          {/* Slide-over Right Panel Container */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10 z-50 pointer-events-none">
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className="w-screen max-w-md sm:max-w-lg bg-white dark:bg-[#111827] shadow-2xl flex flex-col h-full border-l border-slate-200 dark:border-slate-800 pointer-events-auto"
+            >
           
           {/* Top Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
@@ -162,8 +174,10 @@ export function WishlistDrawer() {
             )}
           </div>
 
+            </motion.div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { type UserRole } from "@/models/User";
-import { verifyAccessToken, ACCESS_TOKEN_COOKIE, type AccessTokenPayload } from "./tokens";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { UnauthorizedError, ForbiddenError, formatApiErrorResponse } from "./errors";
-import { logAuditEvent, extractRequestMeta } from "./audit";
+
+export type UserRole = "admin" | "editor" | "customer";
 
 export interface AuthenticatedRequest extends Request {
-  user?: AccessTokenPayload;
+  user?: {
+    userId: string;
+    email: string;
+    role: UserRole;
+  };
 }
 
 export type AuthenticatedRouteHandler = (
@@ -14,59 +18,35 @@ export type AuthenticatedRouteHandler = (
 ) => Promise<NextResponse | Response>;
 
 /**
- * Reusable Higher-Order Wrapper for API Endpoints.
- * Standardizes Token Authentication, Role-Based Access Control (RBAC), and Error Handling.
+ * Reusable Higher-Order Wrapper for API Endpoints powered by Clerk.
  */
 export function withAuth(handler: AuthenticatedRouteHandler, allowedRoles?: UserRole[]) {
   return async (req: Request, context?: unknown): Promise<NextResponse | Response> => {
-    const { ipAddress, userAgent } = extractRequestMeta(req);
-
     try {
-      // 1. Extract Access Token from cookies or Authorization header
-      const cookies = req.headers.get("cookie") || "";
-      const match = cookies.match(new RegExp(`${ACCESS_TOKEN_COOKIE}=([^;]+)`));
-      let token = match ? match[1] : null;
+      const { userId } = await auth();
 
-      if (!token) {
-        const authHeader = req.headers.get("authorization");
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-          token = authHeader.substring(7);
-        }
+      if (!userId) {
+        throw new UnauthorizedError("Authentication required. Please log in.");
       }
 
-      if (!token) {
-        throw new UnauthorizedError("Authentication token is missing. Please log in.");
-      }
+      const clerkUser = await currentUser();
+      const email = clerkUser?.primaryEmailAddress?.emailAddress || "";
+      const role = (clerkUser?.publicMetadata?.role as UserRole) || "customer";
 
-      // 2. Verify Access Token
-      const user = await verifyAccessToken(token);
-      if (!user) {
-        throw new UnauthorizedError("Invalid or expired authentication token.");
-      }
-
-      // 3. Role-Based Access Control (RBAC) Verification
       if (allowedRoles && allowedRoles.length > 0) {
-        if (!allowedRoles.includes(user.role)) {
-          await logAuditEvent({
-            userId: user.userId,
-            email: user.email,
-            action: "RBAC_ACCESS_DENIED",
-            status: "FAILURE",
-            ipAddress,
-            userAgent,
-            details: { requiredRoles: allowedRoles, userRole: user.role },
-          });
-
+        if (!allowedRoles.includes(role)) {
           throw new ForbiddenError(
-            `Access denied. Role '${user.role}' is not authorized to access this resource.`
+            `Access denied. Role '${role}' is not authorized to access this resource.`
           );
         }
       }
 
-      // 4. Attach user payload to request
-      (req as AuthenticatedRequest).user = user;
+      (req as AuthenticatedRequest).user = {
+        userId,
+        email,
+        role,
+      };
 
-      // 5. Execute route handler
       return await handler(req as AuthenticatedRequest, context);
     } catch (err) {
       const errorResponse = formatApiErrorResponse(err);
@@ -75,3 +55,4 @@ export function withAuth(handler: AuthenticatedRouteHandler, allowedRoles?: User
     }
   };
 }
+

@@ -124,4 +124,55 @@ body.drawer-open::-webkit-scrollbar {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Hide Clerk watermark / "Secured by Clerk" & Development Mode badge */
+.cl-footerPages,
+.cl-footerPagesLink,
+.cl-devModeDisclaimer,
+.cl-developmentModeBadge,
+.cl-internal-phfxk3,
+.cl-internal-107f9c2,
+.cl-internal-b3fm6y,
+.cl-internal-11u3j8t,
+.cl-internal-df2k3,
+.cl-profileNavbar + div,
+.cl-navbar + div,
+[data-localization-key*="securedBy"],
+[data-localization-key*="developmentMode"],
+.cl-footerAction + div,
+.cl-footerActionRow + div,
+.cl-footer > div:has(a[href*="clerk.com"]),
+.cl-footer > div:has(span[data-localization-key*="developmentMode"]),
+div:has(> a[href*="clerk.com"]),
+div:has(> span[data-localization-key*="developmentMode"]),
+div:has(> [data-localization-key*="securedBy"]),
+aside:has(a[href*="clerk.com"]) a[href*="clerk.com"],
+aside:has([data-localization-key*="developmentMode"]) [data-localization-key*="developmentMode"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Clerk's inner header logo inside SignIn & SignUp cards to prevent double logo */
+.cl-headerLogo,
+.cl-logoBox,
+.cl-logoImage,
+.cl-headerTitleContainer img,
+.cl-header img,
+.cl-cardHeader img,
+.cl-rootBox img[alt*="logo" i],
+.cl-rootBox img[alt*="lumina" i] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
 

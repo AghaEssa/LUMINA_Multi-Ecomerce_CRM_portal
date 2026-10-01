@@ -1,5 +1,4 @@
-import { connectToDatabase } from "@/lib/mongodb";
-import { Category } from "@/models/Category";
+import { prisma } from "@/lib/prisma";
 
 export type CategoryItem = {
   name: string;
@@ -181,36 +180,32 @@ export const DEFAULT_CATEGORIES: CategoryItem[] = [
 
 export async function getCategories(): Promise<CategoryItem[]> {
   try {
-    await connectToDatabase();
-    const categoriesFromDb = await Category.find(
-      {},
-      { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }
-    )
-      .sort({ createdAt: 1 })
-      .lean();
+    const categoriesFromDb = await prisma.category.findMany({
+      orderBy: { createdAt: "asc" },
+    });
 
     if (categoriesFromDb && categoriesFromDb.length > 0) {
       return categoriesFromDb.map((cat) => {
-        const foundDefault = DEFAULT_CATEGORIES.find((d) => d.slug === String(cat.slug));
+        const foundDefault = DEFAULT_CATEGORIES.find((d) => d.slug === cat.slug);
         return {
-          name: String(cat.name),
-          slug: String(cat.slug),
-          icon: String(cat.icon),
-          description: cat.description ? String(cat.description) : foundDefault?.description,
+          name: cat.name,
+          slug: cat.slug,
+          icon: cat.icon,
+          description: cat.description || foundDefault?.description,
           itemCount: typeof cat.itemCount === "number" ? cat.itemCount : foundDefault?.itemCount,
-          badge: cat.badge ? String(cat.badge) : foundDefault?.badge,
-          image: cat.image ? String(cat.image) : foundDefault?.image,
-          heroImage: foundDefault?.heroImage || cat.image || foundDefault?.image,
+          badge: cat.badge || foundDefault?.badge,
+          image: cat.image || foundDefault?.image,
+          heroImage: cat.heroImage || foundDefault?.heroImage || cat.image || foundDefault?.image,
           featured: Boolean(cat.featured),
-          subCategories: foundDefault?.subCategories || ["All", "General", "Featured"],
-          bannerTagline: foundDefault?.bannerTagline || `Browse ${cat.name} products`,
+          subCategories: cat.subCategories && cat.subCategories.length > 0 ? cat.subCategories : (foundDefault?.subCategories || ["All", "General", "Featured"]),
+          bannerTagline: cat.bannerTagline || foundDefault?.bannerTagline || `Browse ${cat.name} products`,
         };
       });
     }
 
     return DEFAULT_CATEGORIES;
   } catch (error) {
-    console.warn("MongoDB fetch notice: Using starter category dataset.", error instanceof Error ? error.message : error);
+    console.warn("PostgreSQL category query notice: Using default categories dataset.", error instanceof Error ? error.message : error);
     return DEFAULT_CATEGORIES;
   }
 }

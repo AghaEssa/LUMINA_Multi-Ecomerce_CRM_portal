@@ -130,11 +130,7 @@ export default function CheckoutPage() {
     }
   };
 
-  useEffect(() => {
-    // Prompt for location on load as requested
-    requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
   const handleAddressChange = (val: string) => {
     setAddress(val);

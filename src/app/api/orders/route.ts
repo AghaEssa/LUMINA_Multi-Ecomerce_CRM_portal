@@ -1,26 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDomainDatabase } from "@/lib/mongodb";
-import { Order } from "@/models/Order";
+import { prisma } from "@/lib/prisma";
 
-// In-memory fallback order store when MongoDB URI is absent or during offline demo mode
-const inMemoryOrders: Array<{
-  orderId: string;
-  userId?: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  paymentMethod: string;
-  items: unknown[];
-  subtotal: number;
-  estimatedTax: number;
-  shippingFee: number;
-  grandTotal: number;
-  status: string;
-  createdAt: Date;
-}> = [];
+// In-memory fallback order store for resilient fallback during offline demo mode
+const inMemoryOrders: any[] = [];
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const generatedOrderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const orderData = {
+    const orderPayload = {
       orderId: generatedOrderId,
       userId: userId || null,
       fullName,
@@ -62,35 +44,55 @@ export async function POST(req: NextRequest) {
       postalCode,
       country,
       paymentMethod,
-      items,
       subtotal: Number(subtotal) || 0,
       estimatedTax: Number(estimatedTax) || 0,
       shippingFee: Number(shippingFee) || 0,
       grandTotal: Number(grandTotal) || 0,
       status: "processing",
-      createdAt: new Date(),
     };
 
-    // Try saving to MongoDB if connection is available
+    // Try saving to Neon PostgreSQL via Prisma
     try {
-      await connectToDomainDatabase("db_orders");
-      const createdOrder = await Order.create(orderData);
-      inMemoryOrders.push(orderData);
+      const createdOrder = await prisma.order.create({
+        data: {
+          ...orderPayload,
+          items: {
+            create: items.map((item: any) => ({
+              title: item.title || "Product Item",
+              price: Number(item.price) || 0,
+              quantity: Number(item.quantity) || 1,
+              image: item.image || "",
+              size: item.size || null,
+              productId: item.productId || null,
+            })),
+          },
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      inMemoryOrders.push(createdOrder);
 
       return NextResponse.json({
         success: true,
         orderId: createdOrder.orderId,
         order: createdOrder,
-        message: "Order placed successfully and saved to database.",
+        message: "Order placed successfully and saved to PostgreSQL database.",
       }, { status: 201 });
     } catch (dbErr) {
-      console.warn("MongoDB connection unavailable for orders API, using resilient fallback store:", dbErr);
-      inMemoryOrders.push(orderData);
+      console.warn("PostgreSQL connection notice for orders API, using fallback store:", dbErr);
+      const fallbackOrder = {
+        ...orderPayload,
+        items,
+        createdAt: new Date(),
+      };
+      inMemoryOrders.push(fallbackOrder);
 
       return NextResponse.json({
         success: true,
         orderId: generatedOrderId,
-        order: orderData,
+        order: fallbackOrder,
         message: "Order recorded successfully.",
       }, { status: 201 });
     }
@@ -109,34 +111,46 @@ export async function GET(req: NextRequest) {
     const email = searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json({ success: true, orders: inMemoryOrders });
+      let allOrders: any[] = [];
+      try {
+        allOrders = await prisma.order.findMany({
+          include: { items: true },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        });
+      } catch {
+        allOrders = inMemoryOrders;
+      }
+      return NextResponse.json({ success: true, orders: allOrders });
     }
 
     const emailLower = email.trim().toLowerCase();
-    let combinedOrders: any[] = [];
+    let dbOrders: any[] = [];
 
     try {
-      await connectToDomainDatabase("db_orders");
-      const dbOrders = await Order.find({ email: { $regex: new RegExp(`^${emailLower}$`, "i") } })
-        .sort({ createdAt: -1 })
-        .lean();
-      combinedOrders = dbOrders || [];
+      dbOrders = await prisma.order.findMany({
+        where: {
+          email: { equals: emailLower, mode: "insensitive" },
+        },
+        include: { items: true },
+        orderBy: { createdAt: "desc" },
+      });
     } catch (err) {
-      console.warn("MongoDB fetch error for orders, using memory store:", err);
+      console.warn("PostgreSQL fetch error for orders, using memory store:", err);
     }
 
     const memUserOrders = inMemoryOrders.filter(
-      (o) => o.email.trim().toLowerCase() === emailLower
+      (o) => o.email?.trim().toLowerCase() === emailLower
     );
 
-    const existingIds = new Set(combinedOrders.map((o) => o.orderId));
+    const existingIds = new Set(dbOrders.map((o) => o.orderId));
     for (const memOrder of memUserOrders) {
       if (!existingIds.has(memOrder.orderId)) {
-        combinedOrders.unshift(memOrder);
+        dbOrders.unshift(memOrder);
       }
     }
 
-    return NextResponse.json({ success: true, orders: combinedOrders });
+    return NextResponse.json({ success: true, orders: dbOrders });
   } catch (error) {
     console.error("Fetch orders error:", error);
     return NextResponse.json({ success: false, orders: [] }, { status: 500 });
