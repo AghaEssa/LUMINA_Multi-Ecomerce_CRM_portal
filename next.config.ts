@@ -26,10 +26,10 @@ const securityHeaders = [
     value:
       "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com https://translate.google.com https://translate.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com; img-src 'self' data: blob: https://images.unsplash.com https://img.clerk.com https://*.clerk.com https://www.google.com https://translate.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://nominatim.openstreetmap.org; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com;",
   },
-
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
@@ -47,8 +47,5 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-};
-const nextConfig = {
-  output: 'standalone',
 };
 export default nextConfig;
