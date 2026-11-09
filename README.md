@@ -1,99 +1,118 @@
-<div align="center">
+# Lumina
 
-# 🛍️ Lumina Multi-Category E-Commerce & CRM Portal
+Multi-category e-commerce storefront with an integrated CRM portal. Built with Next.js 15 (App Router), React 19, TypeScript, PostgreSQL, and Prisma.
 
-**A production-ready, high-performance E-Commerce & CRM storefront built with Next.js 15, React 19, MongoDB, and Tailwind CSS.**
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-4169E1?logo=postgresql&logoColor=white)
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+## Overview
 
-</div>
+Lumina is a full-stack storefront and admin portal. The customer-facing side handles product browsing, search, filtering, and cart. The backend side handles authentication with two-factor support, audit logging, input validation, and rate limiting.
 
----
+## Features
 
-## 📖 Overview
+**Storefront**
+- Multi-category catalog with category banners
+- Live product search
+- Multi-attribute filtering sidebar
+- Slide-out cart drawer
+- Product detail pages
 
-**Lumina** is an enterprise-grade, multi-category storefront and management portal designed for speed, security, and effortless scalability. It combines a visually rich customer-facing marketplace with robust backend security features including 2FA authentication, audit logging, dynamic product filtering, and multi-language support.
+**Authentication and Security**
+- JWT sessions via `jose`
+- TOTP-based two-factor authentication (`speakeasy`, QR code enrollment)
+- Password hashing with `bcryptjs`
+- Rate-limited API routes
+- URL sanitization
+- Request validation with Zod
 
----
+**Operations**
+- System audit logging
+- Telemetry service integration
 
-## ✨ Key Features
+**UI**
+- Light / dark theme
+- i18n via a translation context
+- Responsive layout
 
-| Category | Key Capabilities |
+## Tech Stack
+
+| Layer | Technology |
 | :--- | :--- |
-| 🛒 **E-Commerce Experience** | Dynamic Multi-Category Banners, Live Product Search, Slide-out Cart Drawer, Multi-attribute Filtering Sidebar, and Detailed Product Views. |
-| 🔐 **Enterprise Security** | 2FA (TOTP with QR Code setup via `speakeasy`), JOSE JWT Authentication, Password Hashing (`bcryptjs`), and Rate-limited API routes. |
-| 🛡️ **Audit & Monitoring** | System Audit Logging, URL Security Sanitization, Zod Schema Validation, and Telemetry service integration. |
-| 🎨 **UI & Customization** | Dark / Light Theme Switching, Multi-Language i18n Translation Context, Responsive Layouts, and Lucide React Icons. |
-| ⚡ **Modern Stack** | Next.js 15 App Router, React 19 Server & Client Components, and Mongoose ORM for MongoDB data modeling. |
+| Framework | Next.js 15 (App Router), React 19 |
+| Language | TypeScript 5.8 |
+| Styling | Tailwind CSS, PostCSS |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Auth | jose, bcryptjs, speakeasy, qrcode |
+| Validation | Zod |
+| Icons | lucide-react |
 
----
+## Prerequisites
 
-## 🛠️ Tech Stack & Dependencies
+- Node.js 18.18 or later
+- npm or yarn
+- A PostgreSQL instance (local or hosted)
 
-```
-Core Framework  : Next.js 15.3 (App Router) & React 19
-Language        : TypeScript 5.8
-Styling         : Tailwind CSS, PostCSS, Autoprefixer
-Database        : MongoDB via Mongoose ORM
-Authentication  : JOSE (JWT), bcryptjs, Speakeasy (TOTP 2FA), QRCode
-Validation      : Zod Schema Validation
-Icons & UI      : Lucide React
-```
+## Getting Started
 
- 
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Ensure you have **Node.js 18+** installed along with **npm** or **yarn**.
-
-### 1. Installation
+### 1. Clone and install
 
 ```bash
-# Clone repository
 git clone https://github.com/AghaEssa/LUMINA_Multi-Ecomerce_CRM_portal.git
 cd LUMINA_Multi-Ecomerce_CRM_portal
-
-# Install dependencies
 npm install
 ```
 
-### 2. Environment Configuration
+### 2. Configure environment
 
-Create a `.env.local` file in the root directory:
+Create `.env.local` in the project root:
 
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/lumina_db
-JWT_SECRET=your_super_secret_jwt_key_here
+DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require"
+JWT_SECRET="<long-random-string>"
 ```
 
-### 3. Database Seeding (Optional)
+Prisma CLI reads `.env` by default. If it cannot find `DATABASE_URL`, mirror the value in a `.env` file.
 
-Populate categories and starter products into your MongoDB database:
+Generate a secure secret with:
 
 ```bash
-npm run seed:categories
-npm run seed:products
+openssl rand -base64 32
 ```
 
-### 4. Run Development Server
+### 3. Set up the database
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 4. Run the development server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+The app is served at http://localhost:3000.
 
----
- 
+## Production
 
-<div align="center">
-  <sub>Built  by Agha Essa Khan • Powered by Next.js 15 & MongoDB</sub>
-</div>
+```bash
+npm run build
+npm run start
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma |
+| `JWT_SECRET` | Yes | Secret used to sign and verify session tokens |
+
+## Author
+
+Agha Essa Khan
